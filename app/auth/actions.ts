@@ -1,18 +1,17 @@
 'use server'
 
-import { createClient } from "@/lib/supabase/server";
+import { authService } from "@/services/auth-service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+/**
+ * Handles the sign-in form submission.
+ */
 export async function signIn(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  const { error } = await authService.signIn(email, password);
 
   if (error) {
     return { error: error.message };
@@ -22,18 +21,15 @@ export async function signIn(formData: FormData) {
   redirect("/");
 }
 
+/**
+ * Handles the sign-up form submission.
+ */
 export async function signUp(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const supabase = await createClient();
+  const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`;
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
-    },
-  });
+  const { error } = await authService.signUp(email, password, redirectTo);
 
   if (error) {
     return { error: error.message };
@@ -42,9 +38,11 @@ export async function signUp(formData: FormData) {
   return { success: "Check your email to continue the sign-up process." };
 }
 
+/**
+ * Handles the sign-out request.
+ */
 export async function signOut() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
+  await authService.signOut();
   revalidatePath("/", "layout");
   redirect("/auth/login");
 }
