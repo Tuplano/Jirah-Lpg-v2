@@ -8,7 +8,9 @@ import {
   Users,
   Settings,
   Flame,
+  LogOut,
 } from "lucide-react";
+import { signOut } from "@/app/auth/actions";
 
 import {
   Sidebar,
@@ -84,6 +86,17 @@ export function DashboardSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <div className="mt-auto p-4 border-t">
+        <form action={signOut}>
+          <SidebarMenuButton 
+            className="w-full justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+            tooltip="Sign Out"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Sign Out</span>
+          </SidebarMenuButton>
+        </form>
+      </div>
       <SidebarRail />
     </Sidebar>
   );
