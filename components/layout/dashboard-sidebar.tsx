@@ -9,6 +9,9 @@ import {
   Settings,
   Flame,
   LogOut,
+  ShoppingCart,
+  RefreshCcw,
+  Truck,
 } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 
@@ -37,7 +40,22 @@ const navItems = [
     icon: Package,
   },
   {
-    title: "Transactions",
+    title: "Sales",
+    url: "/sales",
+    icon: ShoppingCart,
+  },
+  {
+    title: "Adjustments",
+    url: "/adjustments",
+    icon: RefreshCcw,
+  },
+  {
+    title: "Refills",
+    url: "/refills",
+    icon: Truck,
+  },
+  {
+    title: "Audit Log",
     url: "/transactions",
     icon: History,
   },
@@ -52,6 +70,7 @@ const navItems = [
     icon: Settings,
   },
 ];
+
 
 export function DashboardSidebar() {
   return (

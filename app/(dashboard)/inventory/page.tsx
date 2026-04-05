@@ -1,22 +1,17 @@
 import { InventoryView } from "@/components/inventory/inventory-view";
 import { getStockLevels } from "@/services/inventory-service";
-import { getAllLpgSizes } from "@/services/lpg-size-service";
-import { getAllRefills } from "@/services/refill-service";
+import { getUnmanagedSizes } from "@/services/lpg-size-service";
 
 export default async function InventoryPage() {
-  const [stocks, sizes, refills] = await Promise.all([
+  const [stocks, unmanagedSizes] = await Promise.all([
     getStockLevels(),
-    getAllLpgSizes(),
-    getAllRefills()
+    getUnmanagedSizes()
   ]);
 
-  const pendingRefills = refills.filter((r: any) => r.status === 'pending');
-  
   return (
     <InventoryView 
       initialStocks={stocks} 
-      lpgSizes={sizes} 
-      pendingRefills={pendingRefills} 
+      unmanagedSizes={unmanagedSizes}
     />
   );
 }

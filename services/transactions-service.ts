@@ -60,3 +60,16 @@ export async function recordManualAdjustment(data: {
   return tx;
 }
 
+export async function getAllAdjustments(): Promise<Transaction[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*, lpg_sizes(*)")
+    .eq("type", "adjust")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+

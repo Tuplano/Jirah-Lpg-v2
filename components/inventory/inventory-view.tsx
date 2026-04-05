@@ -15,15 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Search, Filter, Plus, Package } from "lucide-react";
 import { Inventory, LpgSize, Refill } from "@/types/inventory";
 import { AddSizeDialog } from "./add-size-dialog";
-import { RecordRefillDialog } from "./record-refill-dialog";
 
 interface InventoryViewProps {
   initialStocks: Inventory[];
-  lpgSizes: LpgSize[];
-  pendingRefills: Refill[];
+  unmanagedSizes: LpgSize[];
 }
 
-export function InventoryView({ initialStocks, lpgSizes, pendingRefills }: InventoryViewProps) {
+export function InventoryView({ initialStocks, unmanagedSizes }: InventoryViewProps) {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [stocks] = React.useState<Inventory[]>(initialStocks);
 
@@ -39,10 +37,10 @@ export function InventoryView({ initialStocks, lpgSizes, pendingRefills }: Inven
           <p className="text-muted-foreground">Manage and track your LPG cylinder stock levels by size.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-           <AddSizeDialog />
-           <RecordRefillDialog lpgSizes={lpgSizes} pendingRefills={pendingRefills} />
+           <AddSizeDialog unmanagedSizes={unmanagedSizes} />
         </div>
       </div>
+
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stocks.map((stock) => (

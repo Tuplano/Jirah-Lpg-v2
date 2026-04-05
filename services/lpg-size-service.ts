@@ -17,7 +17,7 @@ export async function getAllLpgSizes(): Promise<LpgSize[]> {
 export async function createLpgSize(name: string, price: number): Promise<LpgSize> {
   const supabase = await createClient();
   
-  // 1. Create the LPG Size
+  // 1. Create the LPG Size (No inventory initialization here anymore)
   const { data: size, error: sizeError } = await supabase
     .from("lpg_sizes")
     .insert({ name, price })
@@ -26,18 +26,53 @@ export async function createLpgSize(name: string, price: number): Promise<LpgSiz
 
   if (sizeError) throw sizeError;
 
-  // 2. Automatically initialize the inventory record for this size
-  const { error: invError } = await supabase
-    .from("inventory")
-    .insert({ lpg_size_id: size.id, full_count: 0, empty_count: 0, for_refill_count: 0 });
-
-  if (invError) throw invError;
-
   return size;
 }
 
-export async function updateLpgSize(id: number, updates: Partial<LpgSize>): Promise<LpgSize> {
+export async function initializeInventory(
+  lpgSizeId: number, 
+  initialFull: number = 0, 
+  initialEmpty: number = 0
+): Promise<void> {
   const supabase = await createClient();
+  
+  const { error: invError } = await supabase
+    .from("inventory")
+    .insert({ 
+      lpg_size_id: lpgSizeId, 
+      full_count: initialFull, 
+      empty_count: initialEmpty, 
+      for_refill_count: 0 
+    });
+
+  if (invError) throw invError;
+}
+
+export async function getUnmanagedSizes(): Promise<LpgSize[]> {
+  const supabase = await createClient();
+  
+  // Get all sizes
+  const { data: allSizes, error: sizesError } = await supabase
+    .from("lpg_sizes")
+    .select("*");
+    
+  if (sizesError) throw sizesError;
+  
+  // Get managed size IDs
+  const { data: managed, error: managedError } = await supabase
+    .from("inventory")
+    .select("lpg_size_id");
+    
+  if (managedError) throw managedError;
+  
+  const managedIds = new Set(managed.map(m => m.lpg_size_id));
+  
+  // Filter for unmanaged sizes
+  return (allSizes || []).filter(size => !managedIds.has(size.id));
+}
+
+export async function updateLpgSize(id: number, updates: Partial<LpgSize>): Promise<LpgSize> {
+    const supabase = await createClient();
   const { data, error } = await supabase
     .from("lpg_sizes")
     .update(updates)
