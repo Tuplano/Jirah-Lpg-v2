@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { refillService } from "@/services/refill-service";
+import { recordSent, recordReturned } from "@/services/refill-service";
 import { RefreshCcw, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LpgSize, Refill } from "@/types/inventory";
@@ -40,7 +40,7 @@ export function RecordRefillDialog({ lpgSizes, pendingRefills }: RecordRefillDia
     try {
       if (mode === 'send') {
         if (!sizeId) return;
-        await refillService.recordSent({
+        await recordSent({
           lpg_size_id: Number(sizeId),
           quantity: Number(quantity),
           cost: cost ? Number(cost) : 0,
@@ -48,7 +48,7 @@ export function RecordRefillDialog({ lpgSizes, pendingRefills }: RecordRefillDia
         });
       } else {
         if (!refillId) return;
-        await refillService.recordReturned(
+        await recordReturned(
           Number(refillId),
           new Date().toISOString(),
           cost ? Number(cost) : undefined

@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { salesService } from "@/services/sales-service";
+import { recordSale } from "@/services/sales-service";
 import { ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LpgSize } from "@/types/inventory";
@@ -45,7 +45,7 @@ export function RecordSaleDialog({ lpgSizes }: RecordSaleDialogProps) {
     if (!sizeId) return;
     setIsLoading(true);
     try {
-      await salesService.recordSale({
+      await recordSale({
         lpg_size_id: Number(sizeId),
         quantity: Number(quantity),
         total_price: Number(totalPrice),
@@ -64,6 +64,7 @@ export function RecordSaleDialog({ lpgSizes }: RecordSaleDialogProps) {
       setIsLoading(false);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

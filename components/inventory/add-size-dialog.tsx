@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { lpgSizeService } from "@/services/lpg-size-service";
+import { createLpgSize } from "@/services/lpg-size-service";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -28,7 +28,7 @@ export function AddSizeDialog() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await lpgSizeService.create(name, Number(price));
+      await createLpgSize(name, Number(price));
       setOpen(false);
       setName("");
       setPrice("");

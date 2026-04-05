@@ -5,6 +5,13 @@ export interface LpgSize {
   created_at: string;
 }
 
+export interface Customer {
+  id: number;
+  name: string;
+  contact: string;
+  address: string;
+}
+
 export interface Inventory {
   id: number;
   lpg_size_id: number;

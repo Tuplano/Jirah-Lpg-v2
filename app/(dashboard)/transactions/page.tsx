@@ -1,12 +1,12 @@
 import { TransactionsView } from "@/components/transactions/transactions-view";
-import { transactionsService } from "@/services/transactions-service";
-import { lpgSizeService } from "@/services/lpg-size-service";
+import { getAllTransactions } from "@/services/transactions-service";
+import { getAllLpgSizes } from "@/services/lpg-size-service";
 
 export default async function TransactionsPage() {
-  const [transactions, sizes] = await Promise.all([
-    transactionsService.getAll(),
-    lpgSizeService.getAll()
+  const [transactions, lpgSizes] = await Promise.all([
+    getAllTransactions(),
+    getAllLpgSizes()
   ]);
   
-  return <TransactionsView initialTransactions={transactions} lpgSizes={sizes} />;
+  return <TransactionsView initialTransactions={transactions} lpgSizes={lpgSizes} />;
 }

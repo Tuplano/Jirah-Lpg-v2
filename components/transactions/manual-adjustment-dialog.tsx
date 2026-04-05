@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { transactionsService } from "@/services/transactions-service";
+import { recordManualAdjustment } from "@/services/transactions-service";
 import { RefreshCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LpgSize } from "@/types/inventory";
@@ -39,7 +39,7 @@ export function ManualAdjustmentDialog({ lpgSizes }: ManualAdjustmentDialogProps
     
     setIsLoading(true);
     try {
-      await transactionsService.recordManualAdjustment({
+      await recordManualAdjustment({
         lpg_size_id: Number(sizeId),
         quantity: Number(quantity),
         target_column: stockType,

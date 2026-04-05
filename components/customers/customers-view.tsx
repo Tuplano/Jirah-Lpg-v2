@@ -11,17 +11,23 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MOCK_CUSTOMERS } from "@/constants/mock-data";
+import { Customer } from "@/types/inventory";
 import { Users, Search, Plus, Phone, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-export function CustomersView() {
-  const [searchTerm, setSearchTerm] = React.useState("");
+interface CustomersViewProps {
+  initialCustomers: Customer[];
+}
 
-  const filteredCustomers = MOCK_CUSTOMERS.filter((c) =>
+export function CustomersView({ initialCustomers }: CustomersViewProps) {
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [customers] = React.useState<Customer[]>(initialCustomers);
+
+  const filteredCustomers = customers.filter((c) =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.address.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
