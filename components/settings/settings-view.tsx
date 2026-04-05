@@ -21,12 +21,21 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 
 
+import { useLpgSizes, useCreateLpgSize } from "@/hooks/use-settings";
+import { Skeleton } from "@/components/ui/skeleton";
+
 interface SettingsViewProps {
   initialLpgSizes: LpgSize[];
 }
 
 export function SettingsView({ initialLpgSizes }: SettingsViewProps) {
-  const [lpgSizes] = React.useState<LpgSize[]>(initialLpgSizes);
+  const { data: lpgSizes, isLoading } = useLpgSizes();
+
+  if (isLoading && !initialLpgSizes) {
+    return <div className="p-8 text-center text-muted-foreground">Loading catalog...</div>;
+  }
+
+  const sizes = lpgSizes || initialLpgSizes;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -47,7 +56,7 @@ export function SettingsView({ initialLpgSizes }: SettingsViewProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {lpgSizes.length > 0 ? (
+              {sizes.length > 0 ? (
                 <div className="rounded-md border">
                   <div className="grid grid-cols-3 p-3 bg-muted/50 font-semibold text-sm">
                     <span>Size Name</span>
@@ -55,7 +64,7 @@ export function SettingsView({ initialLpgSizes }: SettingsViewProps) {
                     <span className="text-right">Actions</span>
                   </div>
                   <div className="divide-y">
-                    {lpgSizes.map((size) => (
+                    {sizes.map((size) => (
                       <div key={size.id} className="grid grid-cols-3 p-3 items-center text-sm">
                         <span className="font-medium">{size.name}</span>
                         <span>₱{size.price.toLocaleString()}</span>
@@ -76,6 +85,7 @@ export function SettingsView({ initialLpgSizes }: SettingsViewProps) {
             </div>
           </CardContent>
         </Card>
+
 
         {/* Existing Settings */}
         <Card>
@@ -119,24 +129,20 @@ function CreateSizeDialog() {
   const [name, setName] = React.useState("");
   const [price, setPrice] = React.useState("");
   const [open, setOpen] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
+
+  const { mutate: createSize, isPending } = useCreateLpgSize();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    try {
-      await createLpgSize(name, Number(price));
-      setOpen(false);
-      setName("");
-      setPrice("");
-      router.refresh();
-    } catch (error) {
-      console.error("Failed to create LPG size:", error);
-      alert("Error creating size. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    
+    createSize({ name, price: Number(price) }, {
+      onSuccess: () => {
+        setOpen(false);
+        setName("");
+        setPrice("");
+      }
+    });
   };
 
   return (
@@ -185,8 +191,8 @@ function CreateSizeDialog() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isLoading} className="bg-red-600 hover:bg-red-700 text-white">
-              {isLoading ? "Creating..." : "Create Size"}
+            <Button type="submit" disabled={isPending} className="bg-red-600 hover:bg-red-700 text-white">
+              {isPending ? "Creating..." : "Create Size"}
             </Button>
           </DialogFooter>
         </form>
@@ -194,4 +200,5 @@ function CreateSizeDialog() {
     </Dialog>
   );
 }
+
 

@@ -13,37 +13,46 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Truck, ArrowUpRight, ArrowDownLeft } from "lucide-react";
-import { Refill, LpgSize } from   "@/types/inventory";
+import { useRefills } from "@/hooks/use-refills";
+import { useLpgSizes } from "@/hooks/use-sales";
+import { Skeleton } from "@/components/ui/skeleton";
 import { RecordRefillDialog } from "./record-refill-dialog";
 import { cn } from "@/lib/utils";
 
 interface RefillsViewProps {
-  initialRefills: Refill[];
-  lpgSizes: LpgSize[];
+  initialRefills: any[];
+  lpgSizes: any[];
 }
 
-export function RefillsView({ initialRefills, lpgSizes }: RefillsViewProps) {
+export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes }: RefillsViewProps) {
+  const { data: refills, isLoading } = useRefills();
+  const { data: lpgSizes } = useLpgSizes();
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [refills] = React.useState<Refill[]>(initialRefills);
 
-  const filteredRefills = refills.filter((r) =>
-    r.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.status.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredRefills = (refills || initialRefills).filter((refill) =>
+    refill.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    refill.status.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const pendingRefills = refills.filter(r => r.status === 'pending');
+  const pendingRefills = (refills || initialRefills).filter((r: any) => r.status === 'pending');
+
+  if (isLoading && !initialRefills) {
+    return <div className="p-8 text-center text-muted-foreground">Loading refills history...</div>;
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Refill Management</h1>
-          <p className="text-muted-foreground">Track cylinder shipments to and returns from refill stations.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Refill Shipments</h1>
+          <p className="text-muted-foreground">Track outgoing and incoming cylinder refills with suppliers.</p>
         </div>
-        <div className="flex gap-2">
-          <RecordRefillDialog lpgSizes={lpgSizes} pendingRefills={pendingRefills} />
-        </div>
+        <RecordRefillDialog 
+          lpgSizes={lpgSizes || initialLpgSizes} 
+          pendingRefills={pendingRefills}
+        />
       </div>
+
 
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-sm">

@@ -15,32 +15,38 @@ import { Customer } from "@/types/inventory";
 import { Users, Search, Plus, Phone, MapPin } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+import { useCustomers } from "@/hooks/use-customers";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AddCustomerDialog } from "./add-customer-dialog";
+
 interface CustomersViewProps {
   initialCustomers: Customer[];
 }
 
 export function CustomersView({ initialCustomers }: CustomersViewProps) {
+  const { data: customers, isLoading } = useCustomers();
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [customers] = React.useState<Customer[]>(initialCustomers);
 
-  const filteredCustomers = customers.filter((c) =>
+  const filteredCustomers = (customers || initialCustomers).filter((c) =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.address.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (isLoading && !initialCustomers) {
+     return <div className="p-8 text-center text-muted-foreground">Loading customers...</div>;
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-          <p className="text-muted-foreground">Manage your customer database and purchase history in the unified structure.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Customer Management</h1>
+          <p className="text-muted-foreground">Manage your customer database and track their transaction history.</p>
         </div>
-        <Button className="bg-red-600 hover:bg-red-700 text-white gap-2">
-          <Plus className="h-4 w-4" />
-          Add Customer
-        </Button>
+        <AddCustomerDialog />
       </div>
+
+
 
       <div className="flex items-center gap-4">
         <div className="relative flex-1 max-w-sm">

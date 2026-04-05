@@ -20,7 +20,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { initializeInventory } from "@/services/lpg-size-service";
+import { useInitializeInventory } from "@/hooks/use-inventory";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LpgSize } from "@/types/inventory";
@@ -34,28 +34,28 @@ export function AddSizeDialog({ unmanagedSizes }: AddSizeDialogProps) {
   const [initialFull, setInitialFull] = React.useState("0");
   const [initialEmpty, setInitialEmpty] = React.useState("0");
   const [open, setOpen] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
+
+  const { mutate: addSize, isPending } = useInitializeInventory();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sizeId) return;
 
-    setIsLoading(true);
-    try {
-      await initializeInventory(Number(sizeId), Number(initialFull), Number(initialEmpty));
-      setOpen(false);
-      setSizeId("");
-      setInitialFull("0");
-      setInitialEmpty("0");
-      router.refresh(); // Refresh to show new data
-    } catch (error) {
-      console.error("Failed to add size to inventory:", error);
-      alert("Error adding to inventory. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
+    addSize({
+      sizeId: Number(sizeId),
+      initialFull: Number(initialFull),
+      initialEmpty: Number(initialEmpty)
+    }, {
+      onSuccess: () => {
+        setOpen(false);
+        setSizeId("");
+        setInitialFull("0");
+        setInitialEmpty("0");
+      }
+    });
   };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -128,10 +128,11 @@ export function AddSizeDialog({ unmanagedSizes }: AddSizeDialogProps) {
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={isLoading || !sizeId} className="bg-red-600 hover:bg-red-700 text-white">
-              {isLoading ? "Adding..." : "Add to Inventory"}
+            <Button type="submit" disabled={isPending || !sizeId} className="bg-red-600 hover:bg-red-700 text-white">
+              {isPending ? "Adding..." : "Add to Inventory"}
             </Button>
           </DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>

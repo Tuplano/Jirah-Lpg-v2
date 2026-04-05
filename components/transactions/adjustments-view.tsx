@@ -14,26 +14,34 @@ import { Search, RefreshCcw } from "lucide-react";
 import { Transaction, LpgSize } from "@/types/inventory";
 import { ManualAdjustmentDialog } from "./manual-adjustment-dialog";
 
+import { useAdjustments } from "@/hooks/use-transactions";
+import { Skeleton } from "@/components/ui/skeleton";
+
 interface AdjustmentsViewProps {
-  initialAdjustments: Transaction[];
+  initialAdjustments: any[];
   lpgSizes: LpgSize[];
 }
 
 export function AdjustmentsView({ initialAdjustments, lpgSizes }: AdjustmentsViewProps) {
+  const { data: adjustments, isLoading } = useAdjustments();
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [adjustments] = React.useState<Transaction[]>(initialAdjustments);
 
-  const filteredAdjustments = adjustments.filter((t) =>
-    t.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (t.note && t.note.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredAdjustments = (adjustments || initialAdjustments).filter((adj) =>
+    adj.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    adj.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    adj.note?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (isLoading && !initialAdjustments) {
+    return <div className="p-8 text-center text-muted-foreground">Loading adjustments...</div>;
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Stock Adjustments</h1>
-          <p className="text-muted-foreground">Historical records of manual inventory corrections.</p>
+          <p className="text-muted-foreground">Manual inventory corrections and history.</p>
         </div>
         <div className="flex gap-2">
           <ManualAdjustmentDialog lpgSizes={lpgSizes} />

@@ -16,20 +16,22 @@ import { Search, Filter, ArrowUpRight, ArrowDownLeft, RefreshCcw, ShoppingCart }
 import { Transaction, LpgSize } from "@/types/inventory";
 import { RecordSaleDialog } from "../sales/record-sale-dialog";
 import { ManualAdjustmentDialog } from "./manual-adjustment-dialog";
+import { useTransactions } from "@/hooks/use-transactions";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TransactionsViewProps {
-  initialTransactions: Transaction[];
+  initialTransactions: any[];
   lpgSizes: LpgSize[];
 }
 
 export function TransactionsView({ initialTransactions, lpgSizes }: TransactionsViewProps) {
+  const { data: transactions, isLoading } = useTransactions();
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [transactions] = React.useState<Transaction[]>(initialTransactions);
 
-  const filteredTransactions = transactions.filter((t) =>
-    t.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (t.note && t.note.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredTransactions = (transactions || initialTransactions).filter((tx) =>
+    tx.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tx.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tx.note?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getTransactionBadge = (type: string) => {

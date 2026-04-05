@@ -4,6 +4,7 @@ import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { Toaster } from "@/components/ui/sonner";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,10 +32,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <TooltipProvider>
-          {children}
-        </TooltipProvider>
-        <Toaster closeButton position="top-right" />
+        <QueryProvider>
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
+          <Toaster closeButton position="top-right" />
+        </QueryProvider>
       </body>
     </html>
   );

@@ -14,56 +14,54 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { recordSale } from "@/services/sales-service";
+import { useCreateSale, useLpgSizes } from "@/hooks/use-sales";
 import { ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LpgSize } from "@/types/inventory";
 
 interface RecordSaleDialogProps {
-  lpgSizes: LpgSize[];
+  lpgSizes?: LpgSize[];
 }
 
-export function RecordSaleDialog({ lpgSizes }: RecordSaleDialogProps) {
+export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialogProps) {
+  const { data: lpgSizes } = useLpgSizes();
   const [sizeId, setSizeId] = React.useState<string>("");
   const [quantity, setQuantity] = React.useState("1");
   const [totalPrice, setTotalPrice] = React.useState("");
   const [type, setType] = React.useState<'sale' | 'exchange'>('sale');
   const [open, setOpen] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
+
+  const { mutate: createSale, isPending } = useCreateSale();
 
   // Auto-calculate total price based on selected size and quantity
   React.useEffect(() => {
-    const selectedSize = lpgSizes.find(s => s.id.toString() === sizeId);
+    const selectedSize = (lpgSizes || initialLpgSizes)?.find(s => s.id.toString() === sizeId);
     if (selectedSize) {
       setTotalPrice((selectedSize.price * Number(quantity)).toString());
     }
-  }, [sizeId, quantity, lpgSizes]);
+  }, [sizeId, quantity, lpgSizes, initialLpgSizes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sizeId) return;
-    setIsLoading(true);
-    try {
-      await recordSale({
-        lpg_size_id: Number(sizeId),
-        quantity: Number(quantity),
-        total_price: Number(totalPrice),
-        type: type,
-        note: `Sale: ${type}`
-      });
-      setOpen(false);
-      setSizeId("");
-      setQuantity("1");
-      setTotalPrice("");
-      router.refresh();
-    } catch (error) {
-      console.error("Failed to record sale:", error);
-      alert("Error recording sale. Please check inventory stock.");
-    } finally {
-      setIsLoading(false);
-    }
+
+    createSale({
+      lpg_size_id: Number(sizeId),
+      quantity: Number(quantity),
+      total_price: Number(totalPrice),
+      type: type,
+      note: `Sale: ${type}`
+    }, {
+      onSuccess: () => {
+        setOpen(false);
+        setSizeId("");
+        setQuantity("1");
+        setTotalPrice("");
+      }
+    });
   };
+
 
 
   return (
@@ -93,7 +91,7 @@ export function RecordSaleDialog({ lpgSizes }: RecordSaleDialogProps) {
                     <SelectValue placeholder="Select LPG size" />
                   </SelectTrigger>
                   <SelectContent>
-                    {lpgSizes.map((size) => (
+                    {(lpgSizes || initialLpgSizes || []).map((size) => (
                       <SelectItem key={size.id} value={size.id.toString()}>
                         {size.name}
                       </SelectItem>
@@ -147,10 +145,11 @@ export function RecordSaleDialog({ lpgSizes }: RecordSaleDialogProps) {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isLoading || !sizeId}>
-              {isLoading ? "Saving..." : "Process Sale"}
+            <Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isPending || !sizeId}>
+              {isPending ? "Saving..." : "Process Sale"}
             </Button>
           </DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>

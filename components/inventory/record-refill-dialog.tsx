@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { recordSent, recordReturned } from "@/services/refill-service";
+import { useRecordSent, useRecordReturned } from "@/hooks/use-refills";
 import { RefreshCcw, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { LpgSize, Refill } from "@/types/inventory";
@@ -31,42 +31,47 @@ export function RecordRefillDialog({ lpgSizes, pendingRefills }: RecordRefillDia
   const [quantity, setQuantity] = React.useState("1");
   const [cost, setCost] = React.useState("");
   const [open, setOpen] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(false);
   const router = useRouter();
+
+  const { mutate: recordSent, isPending: isSending } = useRecordSent();
+  const { mutate: recordReturned, isPending: isReturning } = useRecordReturned();
+
+  const isPending = isSending || isReturning;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    try {
-      if (mode === 'send') {
-        if (!sizeId) return;
-        await recordSent({
-          lpg_size_id: Number(sizeId),
-          quantity: Number(quantity),
-          cost: cost ? Number(cost) : 0,
-          date_sent: new Date().toISOString()
-        });
-      } else {
-        if (!refillId) return;
-        await recordReturned(
-          Number(refillId),
-          new Date().toISOString(),
-          cost ? Number(cost) : undefined
-        );
-      }
-      setOpen(false);
-      setSizeId("");
-      setRefillId("");
-      setQuantity("1");
-      setCost("");
-      router.refresh();
-    } catch (error) {
-      console.error("Failed to record refill:", error);
-      alert("Error recording refill. Please check inventory stock.");
-    } finally {
-      setIsLoading(false);
+    
+    if (mode === 'send') {
+      if (!sizeId) return;
+      recordSent({
+        lpg_size_id: Number(sizeId),
+        quantity: Number(quantity),
+        cost: cost ? Number(cost) : 0,
+        date_sent: new Date().toISOString()
+      }, {
+        onSuccess: () => {
+          setOpen(false);
+          setSizeId("");
+          setQuantity("1");
+          setCost("");
+        }
+      });
+    } else {
+      if (!refillId) return;
+      recordReturned({
+        id: Number(refillId),
+        dateReturned: new Date().toISOString(),
+        cost: cost ? Number(cost) : undefined
+      }, {
+        onSuccess: () => {
+          setOpen(false);
+          setRefillId("");
+          setCost("");
+        }
+      });
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -179,11 +184,12 @@ export function RecordRefillDialog({ lpgSizes, pendingRefills }: RecordRefillDia
             <Button 
               type="submit" 
               className={mode === 'send' ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}
-              disabled={isLoading || (mode === 'send' ? !sizeId : !refillId)}
+              disabled={isPending || (mode === 'send' ? !sizeId : !refillId)}
             >
-              {isLoading ? "Saving..." : (mode === 'send' ? "Record Shipment" : "Confirm Return")}
+              {isPending ? "Saving..." : (mode === 'send' ? "Record Shipment" : "Confirm Return")}
             </Button>
           </DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>

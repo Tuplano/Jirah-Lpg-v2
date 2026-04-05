@@ -12,67 +12,75 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Plus, Package } from "lucide-react";
+import { Search, Filter, Plus, Package, History, Flame } from "lucide-react";
 import { Inventory, LpgSize, Refill } from "@/types/inventory";
 import { AddSizeDialog } from "./add-size-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useInventory, useUnmanagedSizes } from "@/hooks/use-inventory";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface InventoryViewProps {
-  initialStocks: Inventory[];
-  unmanagedSizes: LpgSize[];
+  initialStocks: Array<any>;
+  unmanagedSizes: Array<any>;
 }
 
-export function InventoryView({ initialStocks, unmanagedSizes }: InventoryViewProps) {
+export function InventoryView({ initialStocks, unmanagedSizes: initialUnmanaged }: InventoryViewProps) {
+  const { data: stocks, isLoading, isError } = useInventory();
+  const { data: unmanagedSizes } = useUnmanagedSizes();
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [stocks] = React.useState<Inventory[]>(initialStocks);
 
-  const filteredStocks = stocks.filter((stock) =>
-    stock.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredStocks = (stocks || initialStocks).filter((item) =>
+    item.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const totalFull = filteredStocks.reduce((acc, item) => acc + item.full_count, 0);
+  const totalEmpty = filteredStocks.reduce((acc, item) => acc + item.empty_count, 0);
+
+  if (isLoading && !initialStocks) {
+    return <div className="p-8 text-center">Loading inventory...</div>;
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Inventory</h1>
-          <p className="text-muted-foreground">Manage and track your LPG cylinder stock levels by size.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Stock Inventory</h1>
+          <p className="text-muted-foreground">Manage your physical LPG cylinder counts across all brands.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-           <AddSizeDialog unmanagedSizes={unmanagedSizes} />
-        </div>
+        <AddSizeDialog unmanagedSizes={unmanagedSizes || initialUnmanaged} />
       </div>
 
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stocks.map((stock) => (
-          <div key={stock.id} className="p-4 rounded-xl border bg-card shadow-sm space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="font-bold text-lg">{stock.lpg_sizes?.name}</span>
-              <Badge variant="outline" className="text-xs font-normal">
-                PHP {stock.lpg_sizes?.price.toLocaleString()}
-              </Badge>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-sm pt-2">
-              <div className="flex flex-col">
-                <span className="text-muted-foreground text-xs uppercase tracking-tight">Full</span>
-                <span className="font-semibold text-green-600">{stock.full_count}</span>
-              </div>
-              <div className="flex flex-col text-right">
-                <span className="text-muted-foreground text-xs uppercase tracking-tight">Empty</span>
-                <span className="font-semibold text-blue-600">{stock.empty_count}</span>
-              </div>
-              <div className="flex flex-col pt-1">
-                <span className="text-muted-foreground text-xs uppercase tracking-tight">Refill</span>
-                <span className="font-semibold text-amber-600">{stock.for_refill_count}</span>
-              </div>
-              <div className="flex flex-col text-right pt-1">
-                <span className="text-muted-foreground text-xs uppercase tracking-tight">Total</span>
-                <span className="font-bold">
-                  {stock.full_count + stock.empty_count + stock.for_refill_count}
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="bg-gradient-to-br from-red-50 to-white border-red-100 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-red-900">Total Full Tanks</CardTitle>
+            <Package className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-700">{totalFull}</div>
+            <p className="text-xs text-red-600/70 mt-1">Ready for sale</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-amber-50 to-white border-amber-100 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-amber-900">Total Empty Tanks</CardTitle>
+            <History className="h-4 w-4 text-amber-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-amber-700">{totalEmpty}</div>
+            <p className="text-xs text-amber-600/70 mt-1">Awaiting refill</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-100 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-blue-900">Total Overall</CardTitle>
+            <Flame className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-700">{totalFull + totalEmpty}</div>
+            <p className="text-xs text-blue-600/70 mt-1">Combined assets</p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="flex items-center gap-4">
