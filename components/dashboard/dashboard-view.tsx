@@ -1,18 +1,26 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MOCK_CYLINDERS, MOCK_TRANSACTIONS } from "@/constants/mock-data";
-import { Package, ShoppingCart, RefreshCcw } from "lucide-react";
+import { Package, ShoppingCart, RefreshCcw, TrendingUp, AlertCircle } from "lucide-react";
 
-export function DashboardView() {
-  const totalCylinders = MOCK_CYLINDERS.length;
-  const fullCylinders = MOCK_CYLINDERS.filter(c => c.current_status === 'Full').length;
-  const emptyCylinders = MOCK_CYLINDERS.filter(c => c.current_status === 'Empty').length;
-  const salesToday = MOCK_TRANSACTIONS.filter(t => t.status === 'Completed').length;
+interface DashboardViewProps {
+  stats: {
+    totalSalesQuantity: number;
+    totalSalesRevenue: number;
+    totalFull: number;
+    totalEmpty: number;
+    totalRefill: number;
+    todaySalesCount: number;
+    todayRevenue: number;
+  };
+}
+
+export function DashboardView({ stats }: DashboardViewProps) {
+  const totalStock = stats.totalFull + stats.totalEmpty + stats.totalRefill;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, Jirah. Here's what's happening with your inventory today in the unified system.</p>
+        <p className="text-muted-foreground">Welcome back. Here's what's happening with your LPG inventory today.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -22,41 +30,41 @@ export function DashboardView() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalCylinders}</div>
-            <p className="text-xs text-muted-foreground">Cylinders across all brands</p>
+            <div className="text-2xl font-bold">{totalStock}</div>
+            <p className="text-xs text-muted-foreground">Total cylinders in the system</p>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow cursor-default">
+        <Card className="hover:shadow-md transition-shadow cursor-default border-green-100 dark:border-green-900/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Full Cylinders</CardTitle>
+            <CardTitle className="text-sm font-medium">Available (Full)</CardTitle>
             <ShoppingCart className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{fullCylinders}</div>
-            <p className="text-xs text-muted-foreground">Ready for sale</p>
+            <div className="text-2xl font-bold text-green-600">{stats.totalFull}</div>
+            <p className="text-xs text-muted-foreground text-green-600/80">Ready for immediate sale</p>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow cursor-default">
+        <Card className="hover:shadow-md transition-shadow cursor-default border-amber-100 dark:border-amber-900/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Empty Cylinders</CardTitle>
-            <RefreshCcw className="h-4 w-4 text-blue-500" />
+            <CardTitle className="text-sm font-medium">Refill Cycle</CardTitle>
+            <RefreshCcw className="h-4 w-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{emptyCylinders}</div>
-            <p className="text-xs text-muted-foreground">Awaiting refill</p>
+            <div className="text-2xl font-bold text-amber-600">{stats.totalRefill}</div>
+            <p className="text-xs text-muted-foreground text-amber-600/80">Currently at the plant</p>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow cursor-default border-red-100 dark:border-red-900/10">
+        <Card className="hover:shadow-md transition-shadow cursor-default border-blue-100 dark:border-blue-900/10">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Sales Today</CardTitle>
-            <Package className="h-4 w-4 text-red-500" />
+            <CardTitle className="text-sm font-medium">Empty Stock</CardTitle>
+            <AlertCircle className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{salesToday}</div>
-            <p className="text-xs text-muted-foreground">Transactions completed</p>
+            <div className="text-2xl font-bold text-blue-600">{stats.totalEmpty}</div>
+            <p className="text-xs text-muted-foreground text-blue-600/80">Waiting to be sent for refill</p>
           </CardContent>
         </Card>
       </div>
@@ -64,54 +72,53 @@ export function DashboardView() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Overview of your latest transactions and stock movements.</CardDescription>
+            <CardTitle>Sales Performance</CardTitle>
+            <CardDescription>Overview of your sales today vs overall performance.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-8">
-              {MOCK_TRANSACTIONS.map((txn) => (
-                <div key={txn.id} className="flex items-center gap-4">
-                   <div className={`h-9 w-9 rounded-full flex items-center justify-center ${txn.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                      {txn.status === 'Completed' ? <ShoppingCart className="h-4 w-4" /> : <RefreshCcw className="h-4 w-4" />}
-                   </div>
-                   <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {txn.items.map((item: any) => `${item.qty}x ${item.brand} ${item.size}`).join(', ')}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(txn.date).toLocaleDateString()} at {new Date(txn.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                   </div>
-                   <div className="text-sm font-semibold">
-                      +{txn.total_amount?.toLocaleString()} PHP
-                   </div>
-                </div>
-              ))}
+          <CardContent className="space-y-8">
+            <div className="flex items-center justify-around py-4">
+               <div className="text-center">
+                  <p className="text-sm font-medium text-muted-foreground">Today's Revenue</p>
+                  <p className="text-3xl font-bold text-red-600">₱{stats.todayRevenue.toLocaleString()}</p>
+                  <div className="flex items-center justify-center gap-1 mt-1 text-xs text-green-600 font-medium">
+                    <TrendingUp className="h-3 w-3" />
+                    {stats.todaySalesCount} units sold
+                  </div>
+               </div>
+               <div className="h-12 w-px bg-border invisible md:visible" />
+               <div className="text-center">
+                  <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+                  <p className="text-3xl font-bold">₱{stats.totalSalesRevenue.toLocaleString()}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {stats.totalSalesQuantity} total units sold
+                  </p>
+               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Stock Health</CardTitle>
-            <CardDescription>Brand-wise status of your LPG cylinders.</CardDescription>
+            <CardTitle>Inventory Health</CardTitle>
+            <CardDescription>Visual breakdown of current cylinder status.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-               {['Petron', 'Solane', 'Phoenix'].map(brand => {
-                 const count = MOCK_CYLINDERS.filter(c => c.brand === brand).length;
-                 const fullCount = MOCK_CYLINDERS.filter(c => c.brand === brand && c.current_status === 'Full').length;
-                 const percentage = count > 0 ? (fullCount / count) * 100 : 0;
-                 
+            <div className="space-y-4 pt-4">
+               {[
+                 { label: 'Full', count: stats.totalFull, color: 'bg-green-500' },
+                 { label: 'Empty', count: stats.totalEmpty, color: 'bg-blue-500' },
+                 { label: 'For Refill', count: stats.totalRefill, color: 'bg-amber-500' }
+               ].map(item => {
+                 const percentage = totalStock > 0 ? (item.count / totalStock) * 100 : 0;
                  return (
-                   <div key={brand} className="space-y-1">
+                   <div key={item.label} className="space-y-1">
                      <div className="flex items-center justify-between text-sm">
-                       <span className="font-medium">{brand}</span>
-                       <span className="text-muted-foreground">{fullCount}/{count} Full</span>
+                       <span className="font-medium">{item.label}</span>
+                       <span className="text-muted-foreground">{item.count} units</span>
                      </div>
                      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                        <div 
-                         className={`h-full ${percentage > 50 ? 'bg-green-500' : percentage > 20 ? 'bg-yellow-500' : 'bg-red-500'}`} 
+                         className={`h-full ${item.color}`} 
                          style={{ width: `${percentage}%` }}
                        />
                      </div>
