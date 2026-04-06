@@ -39,7 +39,7 @@ export function TransactionsView({ initialTransactions, lpgSizes }: Transactions
       case 'sale':
         return (
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-green-100 flex items-center justify-center text-green-700">
+            <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-primary">
               <ShoppingCart className="h-3 w-3" />
             </div>
             <span className="text-sm font-medium">Sale</span>
@@ -48,7 +48,7 @@ export function TransactionsView({ initialTransactions, lpgSizes }: Transactions
       case 'refill_send':
         return (
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-amber-100 flex items-center justify-center text-amber-700">
+            <div className="flex h-6 w-6 items-center justify-center rounded bg-accent text-accent-foreground">
               <ArrowUpRight className="h-3 w-3" />
             </div>
             <span className="text-sm font-medium">Sent for Refill</span>
@@ -57,7 +57,7 @@ export function TransactionsView({ initialTransactions, lpgSizes }: Transactions
       case 'refill_return':
         return (
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-blue-100 flex items-center justify-center text-blue-700">
+            <div className="flex h-6 w-6 items-center justify-center rounded bg-secondary text-secondary-foreground">
               <ArrowDownLeft className="h-3 w-3" />
             </div>
             <span className="text-sm font-medium">Refill Returned</span>

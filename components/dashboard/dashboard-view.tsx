@@ -24,15 +24,15 @@ interface DashboardViewProps {
 export function DashboardView({ stats }: DashboardViewProps) {
   const totalStock = stats.totalFull + stats.totalEmpty + stats.totalRefill;
   const stockBreakdown = [
-    { label: "Full", count: stats.totalFull, color: "bg-green-500" },
-    { label: "Empty", count: stats.totalEmpty, color: "bg-blue-500" },
-    { label: "For Refill", count: stats.totalRefill, color: "bg-amber-500" },
+    { label: "Full", count: stats.totalFull, color: "bg-primary" },
+    { label: "Empty", count: stats.totalEmpty, color: "bg-accent-foreground" },
+    { label: "For Refill", count: stats.totalRefill, color: "bg-secondary-foreground" },
   ];
 
   return (
     <MotionPage className="space-y-8">
       <MotionSection className="flex flex-col gap-2">
-        <span className="w-fit rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-red-700">
+        <span className="w-fit rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-primary">
           Live Overview
         </span>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -54,40 +54,40 @@ export function DashboardView({ stats }: DashboardViewProps) {
         </MotionCard>
 
         <MotionCard delay={0.1}>
-          <Card className="cursor-default border-green-100 bg-gradient-to-br from-green-50 via-white to-white shadow-sm backdrop-blur-sm transition-shadow hover:shadow-xl hover:shadow-green-100/70 dark:border-green-900/10">
+          <Card className="cursor-default border-primary/15 bg-gradient-to-br from-primary/10 via-background to-background shadow-sm backdrop-blur-sm transition-shadow hover:shadow-xl hover:shadow-primary/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Available (Full)</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-green-500" />
+              <ShoppingCart className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.totalFull}</div>
-              <p className="text-xs text-muted-foreground text-green-600/80">Ready for immediate sale</p>
+              <div className="text-2xl font-bold text-primary">{stats.totalFull}</div>
+              <p className="text-xs text-primary/80">Ready for immediate sale</p>
             </CardContent>
           </Card>
         </MotionCard>
 
         <MotionCard delay={0.15}>
-          <Card className="cursor-default border-amber-100 bg-gradient-to-br from-amber-50 via-white to-white shadow-sm backdrop-blur-sm transition-shadow hover:shadow-xl hover:shadow-amber-100/70 dark:border-amber-900/10">
+          <Card className="cursor-default border-accent bg-gradient-to-br from-accent/70 via-background to-background shadow-sm backdrop-blur-sm transition-shadow hover:shadow-xl hover:shadow-accent/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Refill Cycle</CardTitle>
-              <RefreshCcw className="h-4 w-4 text-amber-500" />
+              <RefreshCcw className="h-4 w-4 text-accent-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">{stats.totalRefill}</div>
-              <p className="text-xs text-muted-foreground text-amber-600/80">Currently at the plant</p>
+              <div className="text-2xl font-bold text-accent-foreground">{stats.totalRefill}</div>
+              <p className="text-xs text-accent-foreground/80">Currently at the plant</p>
             </CardContent>
           </Card>
         </MotionCard>
 
         <MotionCard delay={0.2}>
-          <Card className="cursor-default border-blue-100 bg-gradient-to-br from-blue-50 via-white to-white shadow-sm backdrop-blur-sm transition-shadow hover:shadow-xl hover:shadow-blue-100/70 dark:border-blue-900/10">
+          <Card className="cursor-default border-secondary bg-gradient-to-br from-secondary via-background to-background shadow-sm backdrop-blur-sm transition-shadow hover:shadow-xl hover:shadow-secondary/40">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium">Empty Stock</CardTitle>
-              <AlertCircle className="h-4 w-4 text-blue-500" />
+              <AlertCircle className="h-4 w-4 text-secondary-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.totalEmpty}</div>
-              <p className="text-xs text-muted-foreground text-blue-600/80">Waiting to be sent for refill</p>
+              <div className="text-2xl font-bold text-secondary-foreground">{stats.totalEmpty}</div>
+              <p className="text-xs text-secondary-foreground/80">Waiting to be sent for refill</p>
             </CardContent>
           </Card>
         </MotionCard>
@@ -104,8 +104,8 @@ export function DashboardView({ stats }: DashboardViewProps) {
               <div className="flex items-center justify-around py-4">
                  <div className="text-center">
                     <p className="text-sm font-medium text-muted-foreground">Today&apos;s Revenue</p>
-                    <p className="text-3xl font-bold text-red-600">₱{stats.todayRevenue.toLocaleString()}</p>
-                    <div className="mt-1 flex items-center justify-center gap-1 text-xs font-medium text-green-600">
+                    <p className="text-3xl font-bold text-primary">₱{stats.todayRevenue.toLocaleString()}</p>
+                    <div className="mt-1 flex items-center justify-center gap-1 text-xs font-medium text-primary">
                       <TrendingUp className="h-3 w-3" />
                       {stats.todaySalesCount} units sold
                     </div>

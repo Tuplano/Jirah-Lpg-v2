@@ -10,12 +10,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-[radial-gradient(circle_at_top,_rgba(239,68,68,0.09),_transparent_36%),linear-gradient(180deg,rgba(248,250,252,0.95),rgba(248,250,252,0.72))]">
+      <div className="flex min-h-screen w-full bg-[radial-gradient(circle_at_top,color-mix(in_oklab,var(--color-primary)_12%,transparent),transparent_36%),linear-gradient(180deg,rgba(248,250,252,0.95),rgba(248,250,252,0.72))]">
         <DashboardSidebar />
         <SidebarInset className="relative flex-1 overflow-hidden bg-transparent">
           <motion.div
             aria-hidden="true"
-            className="pointer-events-none absolute -top-20 right-[-5rem] h-56 w-56 rounded-full bg-red-500/10 blur-3xl"
+            className="pointer-events-none absolute -top-20 right-[-5rem] h-56 w-56 rounded-full bg-primary/10 blur-3xl"
             animate={{
               x: [0, -18, 0],
               y: [0, 16, 0],

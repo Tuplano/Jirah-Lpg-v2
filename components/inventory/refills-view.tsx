@@ -85,7 +85,9 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes }: Refil
                   <TableCell>
                     <Badge variant="outline" className={cn(
                       "capitalize",
-                      refill.status === 'completed' ? "border-green-500 text-green-700 bg-green-50" : "border-amber-500 text-amber-700 bg-amber-50"
+                      refill.status === 'completed'
+                        ? "border-primary/20 bg-primary/10 text-primary"
+                        : "border-secondary bg-secondary text-secondary-foreground"
                     )}>
                       {refill.status}
                     </Badge>
@@ -98,14 +100,14 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes }: Refil
                     {refill.quantity}
                   </TableCell>
                   <TableCell className="text-sm">
-                    <div className="flex items-center gap-1.5 text-amber-700">
+                    <div className="flex items-center gap-1.5 text-accent-foreground">
                       <ArrowUpRight className="h-3 w-3" />
                       {new Date(refill.date_sent).toLocaleDateString()}
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">
                     {refill.date_returned ? (
-                      <div className="flex items-center gap-1.5 text-blue-700">
+                      <div className="flex items-center gap-1.5 text-secondary-foreground">
                         <ArrowDownLeft className="h-3 w-3" />
                         {new Date(refill.date_returned).toLocaleDateString()}
                       </div>

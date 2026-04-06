@@ -77,7 +77,7 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
                     <TableRow key={size.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-50 text-red-600">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
                             <Tag className="h-4 w-4" />
                           </div>
                           <div className="font-medium">{size.name}</div>
@@ -132,7 +132,7 @@ function CreateSizeDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2 bg-red-600 hover:bg-red-700 text-white border-none">
+        <Button size="sm" className="gap-2">
           <Plus className="h-4 w-4" />
           Add New Size
         </Button>
@@ -175,7 +175,7 @@ function CreateSizeDialog() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isPending} className="bg-red-600 hover:bg-red-700 text-white">
+            <Button type="submit" disabled={isPending}>
               {isPending ? "Creating..." : "Create Size"}
             </Button>
           </DialogFooter>
@@ -254,7 +254,7 @@ function EditSizeDialog({ size }: { size: LpgSize }) {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isPending} className="bg-red-600 hover:bg-red-700 text-white">
+            <Button type="submit" disabled={isPending}>
               {isPending ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>

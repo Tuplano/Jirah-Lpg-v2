@@ -65,8 +65,8 @@ export function CustomersView({ initialCustomers }: CustomersViewProps) {
           <div key={customer.id} className="group relative rounded-lg border bg-card p-6 hover:shadow-md transition-all">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
-                <Avatar className="h-12 w-12 border-2 border-muted group-hover:border-red-500/20 transition-colors">
-                  <AvatarFallback className="bg-red-50 text-red-600 font-bold">
+                <Avatar className="h-12 w-12 border-2 border-muted group-hover:border-primary/20 transition-colors">
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold">
                     {customer.name.split(' ').map((n: string) => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
@@ -82,14 +82,14 @@ export function CustomersView({ initialCustomers }: CustomersViewProps) {
             
             <div className="mt-4 pt-4 border-t border-dashed">
               <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-red-500/50" />
+                <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0 text-primary/50" />
                 <span>{customer.address}</span>
               </div>
             </div>
 
             <div className="mt-6 flex gap-2">
               <Button variant="outline" size="sm" className="flex-1">View History</Button>
-              <Button variant="outline" size="sm" className="flex-1 group-hover:bg-red-50 group-hover:text-red-600 group-hover:border-red-200 transition-colors">Edit</Button>
+              <Button variant="outline" size="sm" className="flex-1 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20 transition-colors">Edit</Button>
             </div>
           </div>
         ))}

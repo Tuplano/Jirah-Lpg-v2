@@ -51,34 +51,34 @@ export function InventoryView({ initialStocks, unmanagedSizes: initialUnmanaged 
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-gradient-to-br from-red-50 to-white border-red-100 shadow-sm">
+        <Card className="bg-gradient-to-br from-primary/10 to-background border-primary/15 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-red-900">Total Full Tanks</CardTitle>
-            <Package className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-medium text-primary">Total Full Tanks</CardTitle>
+            <Package className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700">{totalFull}</div>
-            <p className="text-xs text-red-600/70 mt-1">Ready for sale</p>
+            <div className="text-2xl font-bold text-primary">{totalFull}</div>
+            <p className="mt-1 text-xs text-primary/80">Ready for sale</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-amber-50 to-white border-amber-100 shadow-sm">
+        <Card className="bg-gradient-to-br from-accent/70 to-background border-accent shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-amber-900">Total Empty Tanks</CardTitle>
-            <History className="h-4 w-4 text-amber-600" />
+            <CardTitle className="text-sm font-medium text-accent-foreground">Total Empty Tanks</CardTitle>
+            <History className="h-4 w-4 text-accent-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-amber-700">{totalEmpty}</div>
-            <p className="text-xs text-amber-600/70 mt-1">Awaiting refill</p>
+            <div className="text-2xl font-bold text-accent-foreground">{totalEmpty}</div>
+            <p className="mt-1 text-xs text-accent-foreground/80">Awaiting refill</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-blue-50 to-white border-blue-100 shadow-sm">
+        <Card className="bg-gradient-to-br from-secondary to-background border-secondary shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-blue-900">Total Overall</CardTitle>
-            <Flame className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-medium text-secondary-foreground">Total Overall</CardTitle>
+            <Flame className="h-4 w-4 text-secondary-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-700">{totalFull + totalEmpty}</div>
-            <p className="text-xs text-blue-600/70 mt-1">Combined assets</p>
+            <div className="text-2xl font-bold text-secondary-foreground">{totalFull + totalEmpty}</div>
+            <p className="mt-1 text-xs text-secondary-foreground/80">Combined assets</p>
           </CardContent>
         </Card>
       </div>
@@ -104,9 +104,9 @@ export function InventoryView({ initialStocks, unmanagedSizes: initialUnmanaged 
           <TableHeader>
             <TableRow>
               <TableHead>LPG Size</TableHead>
-              <TableHead className="text-center text-green-600">Full</TableHead>
-              <TableHead className="text-center text-blue-600">Empty</TableHead>
-              <TableHead className="text-center text-amber-600">For Refill</TableHead>
+              <TableHead className="text-center text-primary">Full</TableHead>
+              <TableHead className="text-center text-secondary-foreground">Empty</TableHead>
+              <TableHead className="text-center text-accent-foreground">For Refill</TableHead>
               <TableHead className="text-center font-bold">Total Stock</TableHead>
               <TableHead className="text-right">Price</TableHead>
             </TableRow>
@@ -116,9 +116,9 @@ export function InventoryView({ initialStocks, unmanagedSizes: initialUnmanaged 
               filteredStocks.map((stock) => (
                 <TableRow key={stock.id}>
                   <TableCell className="font-medium">{stock.lpg_sizes?.name}</TableCell>
-                  <TableCell className="text-center font-semibold text-green-700">{stock.full_count}</TableCell>
-                  <TableCell className="text-center font-semibold text-blue-700">{stock.empty_count}</TableCell>
-                  <TableCell className="text-center font-semibold text-amber-700">{stock.for_refill_count}</TableCell>
+                  <TableCell className="text-center font-semibold text-primary">{stock.full_count}</TableCell>
+                  <TableCell className="text-center font-semibold text-secondary-foreground">{stock.empty_count}</TableCell>
+                  <TableCell className="text-center font-semibold text-accent-foreground">{stock.for_refill_count}</TableCell>
                   <TableCell className="text-center font-bold">
                     {stock.full_count + stock.empty_count + stock.for_refill_count}
                   </TableCell>

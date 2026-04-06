@@ -41,7 +41,7 @@ export function AddCustomerDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-red-600 hover:bg-red-700 text-white gap-2">
+        <Button className="gap-2">
           <Plus className="h-4 w-4" />
           Add Customer
         </Button>
@@ -85,7 +85,7 @@ export function AddCustomerDialog() {
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isPending} className="bg-red-600 hover:bg-red-700">
+            <Button type="submit" disabled={isPending}>
               {isPending ? "Adding..." : "Add Customer"}
             </Button>
           </DialogFooter>

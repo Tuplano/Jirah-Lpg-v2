@@ -49,14 +49,14 @@ export function SalesView({ initialSales, lpgSizes: initialLpgSizes }: SalesView
 
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-gradient-to-br from-green-50 to-white border-green-100 shadow-sm">
+        <Card className="bg-gradient-to-br from-primary/10 to-background border-primary/15 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-green-900">Total Sales</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium text-primary">Total Sales</CardTitle>
+            <ShoppingCart className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700">{filteredSales.length}</div>
-            <p className="text-xs text-green-600/70 mt-1">Transactions recorded</p>
+            <div className="text-2xl font-bold text-primary">{filteredSales.length}</div>
+            <p className="mt-1 text-xs text-primary/80">Transactions recorded</p>
           </CardContent>
         </Card>
       </div>
@@ -90,7 +90,7 @@ export function SalesView({ initialSales, lpgSizes: initialLpgSizes }: SalesView
                 <TableRow key={sale.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <div className="h-6 w-6 rounded bg-green-100 flex items-center justify-center text-green-700">
+                      <div className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-primary">
                         <ShoppingCart className="h-3 w-3" />
                       </div>
                       <span className="text-sm font-medium capitalize">{sale.type}</span>
@@ -110,7 +110,7 @@ export function SalesView({ initialSales, lpgSizes: initialLpgSizes }: SalesView
                   <TableCell className="text-center font-bold">
                     {sale.quantity}
                   </TableCell>
-                  <TableCell className="text-right font-bold text-green-600">
+                  <TableCell className="text-right font-bold text-primary">
                     ₱{sale.total_price.toLocaleString()}
                   </TableCell>
                 </TableRow>

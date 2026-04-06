@@ -3,16 +3,8 @@
 import * as React from "react";
 import { motion } from "motion/react";
 import {
-  LayoutDashboard,
-  Package,
-  History,
-  Users,
-  Settings,
   Flame,
   LogOut,
-  ShoppingCart,
-  RefreshCcw,
-  Truck,
   ChevronRight,
 } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
@@ -36,38 +28,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-
-
-const navGroups = [
-  {
-    label: "Monitoring",
-    items: [
-      { title: "Dashboard", url: "/", icon: LayoutDashboard },
-      { title: "Inventory", url: "/inventory", icon: Package },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      { title: "Sales", url: "/sales", icon: ShoppingCart },
-      { title: "Refills", url: "/refills", icon: Truck },
-      { title: "Adjustments", url: "/adjustments", icon: RefreshCcw },
-    ],
-  },
-  {
-    label: "Management",
-    items: [
-      { title: "Customers", url: "/customers", icon: Users },
-      { title: "Audit Log", url: "/transactions", icon: History },
-    ],
-  },
-  {
-    label: "System",
-    items: [
-      { title: "LPG Sizes", url: "/settings", icon: Settings },
-    ],
-  },
-];
+import { dashboardNavigation } from "./navigation";
 
 export function DashboardSidebar() {
   const pathname = usePathname();
@@ -82,7 +43,7 @@ export function DashboardSidebar() {
           transition={{ duration: 0.35 }}
         >
           <motion.div
-            className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 text-white shadow-lg shadow-red-500/20"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-lg shadow-primary/20"
             whileHover={{ rotate: -8, scale: 1.06 }}
             transition={{ type: "spring", stiffness: 320, damping: 20 }}
           >
@@ -95,7 +56,7 @@ export function DashboardSidebar() {
         </motion.div>
       </SidebarHeader>
       <SidebarContent className="flex flex-col gap-0.5">
-        {navGroups.map((group, groupIndex) => {
+        {dashboardNavigation.map((group, groupIndex) => {
           const isGroupActive = group.items.some(item => 
             item.url === "/" ? pathname === "/" : pathname.startsWith(item.url)
           );
@@ -135,7 +96,7 @@ export function DashboardSidebar() {
                                   asChild
                                   tooltip={item.title}
                                   isActive={isActive}
-                                  className="transition-all duration-300 data-[active=true]:bg-red-500/10 data-[active=true]:text-red-700 data-[active=true]:shadow-sm"
+                                  className="transition-all duration-300 data-[active=true]:bg-primary/10 data-[active=true]:text-primary data-[active=true]:shadow-sm"
                                 >
                                   <Link href={item.url}>
                                     <item.icon className="h-4 w-4" />

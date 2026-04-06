@@ -67,7 +67,7 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-red-600 hover:bg-red-700 text-white gap-2">
+        <Button className="gap-2">
           <ShoppingCart className="h-4 w-4" />
           Record Sale
         </Button>
@@ -145,7 +145,7 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" className="bg-red-600 hover:bg-red-700" disabled={isPending || !sizeId}>
+            <Button type="submit" disabled={isPending || !sizeId}>
               {isPending ? "Saving..." : "Process Sale"}
             </Button>
           </DialogFooter>

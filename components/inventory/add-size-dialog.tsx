@@ -60,7 +60,7 @@ export function AddSizeDialog({ unmanagedSizes }: AddSizeDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 bg-red-600 text-white hover:bg-red-700 hover:text-white border-none">
+        <Button className="gap-2">
           <Plus className="h-4 w-4" />
           Add to Stock
         </Button>
@@ -128,7 +128,7 @@ export function AddSizeDialog({ unmanagedSizes }: AddSizeDialogProps) {
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={isPending || !sizeId} className="bg-red-600 hover:bg-red-700 text-white">
+            <Button type="submit" disabled={isPending || !sizeId}>
               {isPending ? "Adding..." : "Add to Inventory"}
             </Button>
           </DialogFooter>

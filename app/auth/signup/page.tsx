@@ -43,7 +43,7 @@ export default function SignupPage() {
           <div className="h-2 bg-primary w-full" />
           <CardHeader className="pt-10 pb-6">
             <div className="flex justify-center mb-6">
-              <div className="bg-green-100 p-4 rounded-full text-green-600 animate-bounce">
+              <div className="bg-primary/10 p-4 rounded-full text-primary animate-bounce">
                 <CheckCircle2 className="h-12 w-12" />
               </div>
             </div>

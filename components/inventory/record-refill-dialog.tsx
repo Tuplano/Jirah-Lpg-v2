@@ -183,7 +183,6 @@ export function RecordRefillDialog({ lpgSizes, pendingRefills }: RecordRefillDia
           <DialogFooter>
             <Button 
               type="submit" 
-              className={mode === 'send' ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}
               disabled={isPending || (mode === 'send' ? !sizeId : !refillId)}
             >
               {isPending ? "Saving..." : (mode === 'send' ? "Record Shipment" : "Confirm Return")}
