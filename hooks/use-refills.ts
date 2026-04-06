@@ -1,26 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAllRefills, recordSent, recordReturned } from "@/services/refill-service";
+import { getAllRefills, recordReturned, recordSentBatch } from "@/services/refill-service";
 import { toast } from "sonner";
 
 export function useRefills() {
   return useQuery({
     queryKey: ["refills"],
     queryFn: async () => await getAllRefills(),
-  });
-}
-
-export function useRecordSent() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (data: any) => {
-      return await recordSent(data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["refills"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory"] });
-      toast.success("Shipment recorded successfully!");
-    }
   });
 }
 
@@ -39,3 +24,18 @@ export function useRecordReturned() {
   });
 }
 
+export function useRecordSentBatch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: any) => {
+      return await recordSentBatch(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["refills"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Refills recorded successfully!");
+    }
+  });
+}

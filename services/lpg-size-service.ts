@@ -3,6 +3,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { LpgSize } from "@/types/inventory";
 
+function normalizeLpgSizeName(name: string): string {
+  const trimmed = name.trim().replace(/\s+/g, " ");
+
+  if (/^\d+(\.\d+)?$/u.test(trimmed)) {
+    return `${trimmed}kg`;
+  }
+
+  return trimmed.replace(/^(\d+(?:\.\d+)?)\s*(kg|kilos?)\b/iu, (_, value) => `${value}kg`);
+}
+
 export async function getAllLpgSizes(): Promise<LpgSize[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -16,11 +26,12 @@ export async function getAllLpgSizes(): Promise<LpgSize[]> {
 
 export async function createLpgSize(name: string, price: number): Promise<LpgSize> {
   const supabase = await createClient();
+  const normalizedName = normalizeLpgSizeName(name);
   
   // 1. Create the LPG Size (No inventory initialization here anymore)
   const { data: size, error: sizeError } = await supabase
     .from("lpg_sizes")
-    .insert({ name, price })
+    .insert({ name: normalizedName, price })
     .select()
     .single();
 
@@ -72,10 +83,15 @@ export async function getUnmanagedSizes(): Promise<LpgSize[]> {
 }
 
 export async function updateLpgSize(id: number, updates: Partial<LpgSize>): Promise<LpgSize> {
-    const supabase = await createClient();
+  const supabase = await createClient();
+  const normalizedUpdates = {
+    ...updates,
+    name: updates.name ? normalizeLpgSizeName(updates.name) : updates.name,
+  };
+
   const { data, error } = await supabase
     .from("lpg_sizes")
-    .update(updates)
+    .update(normalizedUpdates)
     .eq("id", id)
     .select()
     .single();

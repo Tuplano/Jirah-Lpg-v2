@@ -142,17 +142,17 @@ function CreateSizeDialog() {
           <DialogHeader>
             <DialogTitle>Define New LPG Size</DialogTitle>
             <DialogDescription>
-              Create a new LPG size/brand category in your catalog.
+              Create a new LPG size in your catalog. Numeric entries are automatically saved as kg.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
-                Name
+                Size
               </Label>
               <Input
                 id="name"
-                placeholder="e.g. 11kg Petron"
+                placeholder="e.g. 11 or 11kg"
                 className="col-span-3"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -229,7 +229,7 @@ function EditSizeDialog({ size }: { size: LpgSize }) {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor={`edit-name-${size.id}`} className="text-right">
-                Name
+                Size
               </Label>
               <Input
                 id={`edit-name-${size.id}`}

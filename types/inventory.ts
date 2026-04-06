@@ -24,16 +24,42 @@ export interface Inventory {
 
 export type RefillStatus = 'pending' | 'completed';
 
-export interface Refill {
-  id: number;
+export interface RefillSendItem {
   lpg_size_id: number;
   quantity: number;
+}
+
+export interface RefillBatchItem {
+  id: number;
+  refill_batch_id: number;
+  lpg_size_id: number;
+  quantity: number;
+  created_at: string;
+  lpg_sizes?: LpgSize;
+}
+
+export interface RefillBatch {
+  id: number;
+  cost: number | null;
+  date_sent: string;
+  date_returned: string | null;
+  status: RefillStatus;
+  note: string | null;
+  created_at: string;
+  refill_batch_items?: RefillBatchItem[];
+}
+
+export interface RefillProductSummary {
+  id: string;
+  names: string[];
+  total_quantity: number;
   cost: number | null;
   date_sent: string;
   date_returned: string | null;
   status: RefillStatus;
   created_at: string;
-  lpg_sizes?: LpgSize; // Joined data
+  note: string | null;
+  items: RefillBatchItem[];
 }
 
 export type SaleType = 'sale' | 'exchange';
@@ -53,7 +79,8 @@ export type TransactionType = 'sale' | 'refill_send' | 'refill_return' | 'return
 export interface Transaction {
   id: number;
   type: TransactionType;
-  lpg_size_id: number;
+  lpg_size_id: number | null;
+  refill_batch_id?: number | null;
   quantity: number;
   note: string | null;
   created_at: string;

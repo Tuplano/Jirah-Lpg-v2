@@ -18,9 +18,10 @@ import { useLpgSizes } from "@/hooks/use-sales";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecordRefillDialog } from "./record-refill-dialog";
 import { cn } from "@/lib/utils";
+import { RefillBatch, RefillProductSummary } from "@/types/inventory";
 
 interface RefillsViewProps {
-  initialRefills: any[];
+  initialRefills: RefillBatch[];
   lpgSizes: any[];
 }
 
@@ -28,13 +29,33 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes }: Refil
   const { data: refills, isLoading } = useRefills();
   const { data: lpgSizes } = useLpgSizes();
   const [searchTerm, setSearchTerm] = React.useState("");
+  const refillBatches = (refills || initialRefills) as RefillBatch[];
+  const summarizedRefills: RefillProductSummary[] = refillBatches.map((batch) => {
+    const items = batch.refill_batch_items || [];
+    const names = items.map((item) => item.lpg_sizes?.name || "Unknown LPG Size");
+    const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  const filteredRefills = (refills || initialRefills).filter((refill) =>
-    refill.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    refill.status.toLowerCase().includes(searchTerm.toLowerCase())
+    return {
+      id: `batch-${batch.id}`,
+      names,
+      total_quantity: totalQuantity,
+      cost: batch.cost,
+      date_sent: batch.date_sent,
+      date_returned: batch.date_returned,
+      status: batch.status,
+      created_at: batch.created_at,
+      note: batch.note,
+      items,
+    };
+  });
+
+  const filteredRefills = summarizedRefills.filter((refill) =>
+    refill.names.some((name) => name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    refill.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    refill.note?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const pendingRefills = (refills || initialRefills).filter((r: any) => r.status === 'pending');
+  const pendingRefills = refillBatches.filter((r) => r.status === 'pending');
 
   if (isLoading && !initialRefills) {
     return <div className="p-8 text-center text-muted-foreground">Loading refills history...</div>;
@@ -44,8 +65,8 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes }: Refil
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Refill Shipments</h1>
-          <p className="text-muted-foreground">Track outgoing and incoming cylinder refills with suppliers.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Refills</h1>
+          <p className="text-muted-foreground">Track outgoing and returned refill products with suppliers.</p>
         </div>
         <RecordRefillDialog 
           lpgSizes={lpgSizes || initialLpgSizes} 
@@ -58,7 +79,7 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes }: Refil
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder="Search by size or status..." 
+            placeholder="Search by product, status, or note..." 
             className="pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -71,8 +92,8 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes }: Refil
           <TableHeader>
             <TableRow>
               <TableHead>Status</TableHead>
-              <TableHead>Size</TableHead>
-              <TableHead className="text-center">Quantity</TableHead>
+              <TableHead>Products</TableHead>
+              <TableHead className="text-center">Total Qty</TableHead>
               <TableHead>Date Sent</TableHead>
               <TableHead>Date Returned</TableHead>
               <TableHead className="text-right">Cost</TableHead>
@@ -94,10 +115,16 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes }: Refil
                   </TableCell>
 
                   <TableCell className="font-medium text-sm">
-                    {refill.lpg_sizes?.name}
+                    <div className="space-y-1">
+                      {refill.items.map((item) => (
+                        <div key={item.id}>
+                          {item.quantity}x {item.lpg_sizes?.name}
+                        </div>
+                      ))}
+                    </div>
                   </TableCell>
                   <TableCell className="text-center font-bold">
-                    {refill.quantity}
+                    {refill.total_quantity}
                   </TableCell>
                   <TableCell className="text-sm">
                     <div className="flex items-center gap-1.5 text-accent-foreground">

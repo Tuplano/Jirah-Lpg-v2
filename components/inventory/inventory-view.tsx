@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, Plus, Package, History, Flame } from "lucide-react";
-import { Inventory, LpgSize, Refill } from "@/types/inventory";
 import { AddSizeDialog } from "./add-size-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useInventory, useUnmanagedSizes } from "@/hooks/use-inventory";

@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllSales, recordSale } from "@/services/sales-service";
-import { getAllCustomers } from "@/services/customer-service";
 import { getAllLpgSizes } from "@/services/lpg-size-service";
 import { toast } from "sonner";
 
@@ -8,13 +7,6 @@ export function useSales() {
   return useQuery({
     queryKey: ["sales"],
     queryFn: async () => await getAllSales(),
-  });
-}
-
-export function useCustomers() {
-  return useQuery({
-    queryKey: ["customers"],
-    queryFn: async () => await getAllCustomers(),
   });
 }
 

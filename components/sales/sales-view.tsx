@@ -29,7 +29,6 @@ export function SalesView({ initialSales, lpgSizes: initialLpgSizes }: SalesView
   const [searchTerm, setSearchTerm] = React.useState("");
 
   const filteredSales = (sales || initialSales).filter((sale) =>
-    sale.customers?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     sale.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -65,7 +64,7 @@ export function SalesView({ initialSales, lpgSizes: initialLpgSizes }: SalesView
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder="Search by customer or size..." 
+            placeholder="Search by LPG size..." 
             className="pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
