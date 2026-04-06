@@ -5,4 +5,3 @@ export default async function SettingsPage() {
   const lpgSizes = await getAllLpgSizes();
   return <SettingsView initialLpgSizes={lpgSizes} />;
 }
-

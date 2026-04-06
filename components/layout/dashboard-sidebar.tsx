@@ -64,7 +64,7 @@ const navGroups = [
   {
     label: "System",
     items: [
-      { title: "Settings", url: "/settings", icon: Settings },
+      { title: "LPG Sizes", url: "/settings", icon: Settings },
     ],
   },
 ];

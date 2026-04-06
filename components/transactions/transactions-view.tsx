@@ -81,8 +81,8 @@ export function TransactionsView({ initialTransactions, lpgSizes }: Transactions
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Transactions</h1>
-          <p className="text-muted-foreground">Historical records of all inventory movements and sales.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Audit Log</h1>
+          <p className="text-muted-foreground">Historical records of sales, refills, and inventory movements.</p>
         </div>
         <div className="flex gap-2">
           <ManualAdjustmentDialog lpgSizes={lpgSizes} />

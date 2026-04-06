@@ -14,19 +14,17 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, ShoppingCart } from "lucide-react";
 import { RecordSaleDialog } from "./record-sale-dialog";
-import { useSales, useCustomers, useLpgSizes } from "@/hooks/use-sales";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
+import { useLpgSizes, useSales } from "@/hooks/use-sales";
+import { LpgSize } from "@/types/inventory";
 
 
 interface SalesViewProps {
   initialSales: any[];
-  customers: any[];
+  lpgSizes?: LpgSize[];
 }
 
-export function SalesView({ initialSales, customers: initialCustomers }: SalesViewProps) {
+export function SalesView({ initialSales, lpgSizes: initialLpgSizes }: SalesViewProps) {
   const { data: sales, isLoading } = useSales();
-  const { data: customers } = useCustomers();
   const { data: lpgSizes } = useLpgSizes();
   const [searchTerm, setSearchTerm] = React.useState("");
 
@@ -46,7 +44,7 @@ export function SalesView({ initialSales, customers: initialCustomers }: SalesVi
           <h1 className="text-3xl font-bold tracking-tight">Sales Records</h1>
           <p className="text-muted-foreground">Track all LPG sales, customer returns, and revenue in one place.</p>
         </div>
-        <RecordSaleDialog lpgSizes={lpgSizes} />
+        <RecordSaleDialog lpgSizes={lpgSizes || initialLpgSizes} />
       </div>
 
 
