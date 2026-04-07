@@ -66,6 +66,7 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
               <TableHeader>
                 <TableRow>
                   <TableHead>LPG Size</TableHead>
+                  <TableHead>Kilos</TableHead>
                   <TableHead>Standard Price</TableHead>
                   <TableHead>Date Added</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -83,6 +84,7 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
                           <div className="font-medium">{size.name}</div>
                         </div>
                       </TableCell>
+                      <TableCell className="font-medium">{size.size} kg</TableCell>
                       <TableCell className="font-medium">₱{size.price.toLocaleString()}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {new Date(size.created_at).toLocaleDateString()}
@@ -94,7 +96,7 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                       No LPG sizes found.
                     </TableCell>
                   </TableRow>
@@ -111,6 +113,7 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
 function CreateSizeDialog() {
   const [name, setName] = React.useState("");
   const [price, setPrice] = React.useState("");
+  const [size, setSize] = React.useState("");
   const [open, setOpen] = React.useState(false);
   const { mutate: createSize, isPending } = useCreateLpgSize();
 
@@ -118,12 +121,13 @@ function CreateSizeDialog() {
     e.preventDefault();
 
     createSize(
-      { name, price: Number(price) },
+      { name, price: Number(price), size: Number(size) },
       {
         onSuccess: () => {
           setOpen(false);
           setName("");
           setPrice("");
+          setSize("");
         },
       }
     );
@@ -160,12 +164,30 @@ function CreateSizeDialog() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="size" className="text-right">
+                Kilos
+              </Label>
+              <Input
+                id="size"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="11"
+                className="col-span-3"
+                value={size}
+                onChange={(e) => setSize(e.target.value)}
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="price" className="text-right">
                 Price (₱)
               </Label>
               <Input
                 id="price"
                 type="number"
+                min="0"
+                step="0.01"
                 placeholder="1000"
                 className="col-span-3"
                 value={price}
@@ -188,6 +210,7 @@ function CreateSizeDialog() {
 function EditSizeDialog({ size }: { size: LpgSize }) {
   const [name, setName] = React.useState(size.name);
   const [price, setPrice] = React.useState(size.price.toString());
+  const [kilos, setKilos] = React.useState(size.size.toString());
   const [open, setOpen] = React.useState(false);
   const { mutate: updateSize, isPending } = useUpdateLpgSize();
 
@@ -195,14 +218,15 @@ function EditSizeDialog({ size }: { size: LpgSize }) {
     if (!open) {
       setName(size.name);
       setPrice(size.price.toString());
+      setKilos(size.size.toString());
     }
-  }, [open, size.name, size.price]);
+  }, [open, size.name, size.price, size.size]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     updateSize(
-      { id: size.id, name, price: Number(price) },
+      { id: size.id, name, price: Number(price), size: Number(kilos) },
       {
         onSuccess: () => {
           setOpen(false);
@@ -240,12 +264,29 @@ function EditSizeDialog({ size }: { size: LpgSize }) {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor={`edit-size-${size.id}`} className="text-right">
+                Kilos
+              </Label>
+              <Input
+                id={`edit-size-${size.id}`}
+                type="number"
+                min="0"
+                step="0.01"
+                className="col-span-3"
+                value={kilos}
+                onChange={(e) => setKilos(e.target.value)}
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor={`edit-price-${size.id}`} className="text-right">
                 Price (₱)
               </Label>
               <Input
                 id={`edit-price-${size.id}`}
                 type="number"
+                min="0"
+                step="0.01"
                 className="col-span-3"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}

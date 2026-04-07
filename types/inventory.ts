@@ -2,6 +2,7 @@ export interface LpgSize {
   id: number;
   name: string;
   price: number;
+  size: number;
   created_at: string;
 }
 
@@ -27,6 +28,7 @@ export type RefillStatus = 'pending' | 'completed';
 export interface RefillSendItem {
   lpg_size_id: number;
   quantity: number;
+  price_per_kilo: number;
 }
 
 export interface RefillBatchItem {
@@ -34,6 +36,7 @@ export interface RefillBatchItem {
   refill_batch_id: number;
   lpg_size_id: number;
   quantity: number;
+  price_per_kilo: number;
   created_at: string;
   lpg_sizes?: LpgSize;
 }

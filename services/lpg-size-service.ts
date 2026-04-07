@@ -24,20 +24,20 @@ export async function getAllLpgSizes(): Promise<LpgSize[]> {
   return data || [];
 }
 
-export async function createLpgSize(name: string, price: number): Promise<LpgSize> {
+export async function createLpgSize(name: string, price: number, size: number): Promise<LpgSize> {
   const supabase = await createClient();
   const normalizedName = normalizeLpgSizeName(name);
   
   // 1. Create the LPG Size (No inventory initialization here anymore)
-  const { data: size, error: sizeError } = await supabase
+  const { data: createdSize, error: sizeError } = await supabase
     .from("lpg_sizes")
-    .insert({ name: normalizedName, price })
+    .insert({ name: normalizedName, price, size })
     .select()
     .single();
 
   if (sizeError) throw sizeError;
 
-  return size;
+  return createdSize;
 }
 
 export async function initializeInventory(

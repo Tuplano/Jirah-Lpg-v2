@@ -13,8 +13,8 @@ export function useCreateLpgSize() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ name, price }: { name: string, price: number }) => {
-      return await createLpgSize(name, price);
+    mutationFn: async ({ name, price, size }: { name: string, price: number; size: number }) => {
+      return await createLpgSize(name, price, size);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lpg-sizes"] });
@@ -31,8 +31,8 @@ export function useUpdateLpgSize() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, name, price }: { id: number; name: string; price: number }) => {
-      return await updateLpgSize(id, { name, price });
+    mutationFn: async ({ id, name, price, size }: { id: number; name: string; price: number; size: number }) => {
+      return await updateLpgSize(id, { name, price, size });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lpg-sizes"] });

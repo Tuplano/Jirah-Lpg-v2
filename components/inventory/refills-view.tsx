@@ -15,19 +15,21 @@ import { Input } from "@/components/ui/input";
 import { Search, Truck, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { useRefills } from "@/hooks/use-refills";
 import { useLpgSizes } from "@/hooks/use-sales";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useInventory } from "@/hooks/use-inventory";
 import { RecordRefillDialog } from "./record-refill-dialog";
 import { cn } from "@/lib/utils";
-import { RefillBatch, RefillProductSummary } from "@/types/inventory";
+import { Inventory, LpgSize, RefillBatch, RefillProductSummary } from "@/types/inventory";
 
 interface RefillsViewProps {
   initialRefills: RefillBatch[];
-  lpgSizes: any[];
+  lpgSizes: LpgSize[];
+  initialInventory: Inventory[];
 }
 
-export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes }: RefillsViewProps) {
+export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initialInventory }: RefillsViewProps) {
   const { data: refills, isLoading } = useRefills();
   const { data: lpgSizes } = useLpgSizes();
+  const { data: inventory } = useInventory();
   const [searchTerm, setSearchTerm] = React.useState("");
   const refillBatches = (refills || initialRefills) as RefillBatch[];
   const summarizedRefills: RefillProductSummary[] = refillBatches.map((batch) => {
@@ -70,6 +72,7 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes }: Refil
         </div>
         <RecordRefillDialog 
           lpgSizes={lpgSizes || initialLpgSizes} 
+          inventory={inventory || initialInventory}
           pendingRefills={pendingRefills}
         />
       </div>
@@ -119,6 +122,16 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes }: Refil
                       {refill.items.map((item) => (
                         <div key={item.id}>
                           {item.quantity}x {item.lpg_sizes?.name}
+                          {item.lpg_sizes ? (
+                            <span className="text-muted-foreground">
+                              {" "}
+                              at ₱{item.price_per_kilo.toLocaleString()}/kg = ₱
+                              {(item.price_per_kilo * item.lpg_sizes.size * item.quantity).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          ) : null}
                         </div>
                       ))}
                     </div>

@@ -16,7 +16,6 @@ export async function getAllRefills(): Promise<RefillBatch[]> {
 
 export async function recordSentBatch(data: {
   items: RefillSendItem[];
-  cost?: number;
   date_sent: string;
   note?: string;
 }) {
@@ -24,11 +23,28 @@ export async function recordSentBatch(data: {
     throw new Error("At least one refill product is required.");
   }
   const supabase = await createClient();
+  const { data: lpgSizes, error: lpgSizesError } = await supabase
+    .from("lpg_sizes")
+    .select("id, size")
+    .in("id", data.items.map((item) => item.lpg_size_id));
+
+  if (lpgSizesError) throw lpgSizesError;
+
+  const lpgSizeMap = new Map((lpgSizes || []).map((size) => [size.id, Number(size.size)]));
+  const computedCost = data.items.reduce((total, item) => {
+    const tankSize = lpgSizeMap.get(item.lpg_size_id);
+
+    if (tankSize === undefined) {
+      throw new Error(`Missing LPG size for refill item ${item.lpg_size_id}.`);
+    }
+
+    return total + item.price_per_kilo * tankSize * item.quantity;
+  }, 0);
 
   const { data: batch, error: batchError } = await supabase
     .from("refill_batches")
     .insert({
-      cost: data.cost,
+      cost: Number(computedCost.toFixed(2)),
       date_sent: data.date_sent,
       status: "pending",
       note: data.note,
@@ -42,6 +58,7 @@ export async function recordSentBatch(data: {
     refill_batch_id: batch.id,
     lpg_size_id: item.lpg_size_id,
     quantity: item.quantity,
+    price_per_kilo: item.price_per_kilo,
   }));
 
   const { data: items, error: itemsError } = await supabase
@@ -52,6 +69,19 @@ export async function recordSentBatch(data: {
   if (itemsError) throw itemsError;
 
   for (const item of data.items) {
+    const { data: currentInv, error: fetchError } = await supabase
+      .from("inventory")
+      .select("*")
+      .eq("lpg_size_id", item.lpg_size_id)
+      .single();
+
+    if (fetchError) throw fetchError;
+    if (item.quantity > currentInv.empty_count) {
+      throw new Error(
+        `Cannot send ${item.quantity} units for LPG size ${item.lpg_size_id}. Only ${currentInv.empty_count} empty tanks are available.`
+      );
+    }
+
     const { error: txError } = await supabase
       .from("transactions")
       .insert({
@@ -63,15 +93,6 @@ export async function recordSentBatch(data: {
       });
 
     if (txError) throw txError;
-
-    const { data: currentInv, error: fetchError } = await supabase
-      .from("inventory")
-      .select("*")
-      .eq("lpg_size_id", item.lpg_size_id)
-      .single();
-
-    if (fetchError) throw fetchError;
-
     const { error: invError } = await supabase
       .from("inventory")
       .update({
