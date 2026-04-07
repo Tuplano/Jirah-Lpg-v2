@@ -31,13 +31,20 @@ interface RefillProductRow {
   pricePerKilo: string;
 }
 
+function getCurrentDateTimeLocal() {
+  const now = new Date();
+  const timezoneOffset = now.getTimezoneOffset() * 60000;
+  return new Date(now.getTime() - timezoneOffset).toISOString().slice(0, 16);
+}
+
 export function RecordRefillDialog({ lpgSizes, inventory, pendingRefills }: RecordRefillDialogProps) {
   const [mode, setMode] = React.useState<'send' | 'return'>('send');
   const [products, setProducts] = React.useState<RefillProductRow[]>([
     { id: crypto.randomUUID(), sizeId: "", quantity: "1", pricePerKilo: "" },
   ]);
   const [refillId, setRefillId] = React.useState<string>("");
-  const [cost, setCost] = React.useState("");
+  const [sendDateTime, setSendDateTime] = React.useState(getCurrentDateTimeLocal);
+  const [returnDateTime, setReturnDateTime] = React.useState(getCurrentDateTimeLocal);
   const [open, setOpen] = React.useState(false);
 
   const { mutate: recordSentBatch, isPending: isSending } = useRecordSentBatch();
@@ -79,7 +86,7 @@ export function RecordRefillDialog({ lpgSizes, inventory, pendingRefills }: Reco
 
   const resetSendForm = () => {
     setProducts([{ id: crypto.randomUUID(), sizeId: "", quantity: "1", pricePerKilo: "" }]);
-    setCost("");
+    setSendDateTime(getCurrentDateTimeLocal());
   };
 
   const addProductRow = () => {
@@ -130,7 +137,7 @@ export function RecordRefillDialog({ lpgSizes, inventory, pendingRefills }: Reco
           quantity: Number(product.quantity),
           price_per_kilo: Number(product.pricePerKilo),
         })),
-        date_sent: new Date().toISOString()
+        date_sent: new Date(sendDateTime).toISOString()
       }, {
         onSuccess: () => {
           setOpen(false);
@@ -141,13 +148,12 @@ export function RecordRefillDialog({ lpgSizes, inventory, pendingRefills }: Reco
       if (!refillId) return;
       recordReturned({
         id: Number(refillId),
-        dateReturned: new Date().toISOString(),
-        cost: cost ? Number(cost) : undefined
+        dateReturned: new Date(returnDateTime).toISOString(),
       }, {
         onSuccess: () => {
           setOpen(false);
           setRefillId("");
-          setCost("");
+          setReturnDateTime(getCurrentDateTimeLocal());
         }
       });
     }
@@ -158,6 +164,8 @@ export function RecordRefillDialog({ lpgSizes, inventory, pendingRefills }: Reco
       setMode("send");
       resetSendForm();
       setRefillId("");
+      setSendDateTime(getCurrentDateTimeLocal());
+      setReturnDateTime(getCurrentDateTimeLocal());
     }
   }, [open]);
 
@@ -201,6 +209,24 @@ export function RecordRefillDialog({ lpgSizes, inventory, pendingRefills }: Reco
 
             {mode === 'send' ? (
               <>
+                <div className="grid gap-4 rounded-lg border bg-muted/20 p-4 sm:grid-cols-4 sm:items-center">
+                  <Label htmlFor="send-date-time" className="text-sm font-medium sm:text-right">
+                    Send Date & Time
+                  </Label>
+                  <div className="sm:col-span-3">
+                    <Input
+                      id="send-date-time"
+                      type="datetime-local"
+                      value={sendDateTime}
+                      max={getCurrentDateTimeLocal()}
+                      onChange={(e) => setSendDateTime(e.target.value)}
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Defaults to today and the current time, but you can adjust it before saving.
+                    </p>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div>
                     <Label className="text-sm font-medium">Refill Products</Label>
@@ -349,44 +375,53 @@ export function RecordRefillDialog({ lpgSizes, inventory, pendingRefills }: Reco
                 </div>
               </>
             ) : (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="refill" className="text-right text-xs">Pending</Label>
-                <div className="col-span-3">
-                  <Select onValueChange={setRefillId} value={refillId}>
-                    <SelectTrigger id="refill">
-                      <SelectValue placeholder="Select pending refill" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {pendingRefills.length > 0 ? (
-                        pendingRefills.map((r) => (
-                          <SelectItem key={r.id} value={r.id.toString()}>
-                            Batch #{r.id} ({(r.refill_batch_items || []).reduce((sum, item) => sum + item.quantity, 0)} units, Sent: {new Date(r.date_sent).toLocaleDateString()})
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <div className="p-2 text-xs text-muted-foreground text-center">
-                          No pending refills found.
-                        </div>
-                      )}
-                    </SelectContent>
-                  </Select>
+              <>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="refill" className="text-right text-xs">Pending</Label>
+                  <div className="col-span-3">
+                    <Select onValueChange={setRefillId} value={refillId}>
+                      <SelectTrigger id="refill">
+                        <SelectValue placeholder="Select pending refill" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {pendingRefills.length > 0 ? (
+                          pendingRefills.map((r) => (
+                            <SelectItem key={r.id} value={r.id.toString()}>
+                              Batch #{r.id} ({(r.refill_batch_items || []).reduce((sum, item) => sum + item.quantity, 0)} units, Sent: {new Date(r.date_sent).toLocaleDateString()})
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="p-2 text-xs text-muted-foreground text-center">
+                            No pending refills found.
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-              </div>
+                <div className="grid gap-4 rounded-lg border bg-muted/20 p-4 sm:grid-cols-4 sm:items-center">
+                  <Label htmlFor="return-date-time" className="text-sm font-medium sm:text-right">
+                    Return Date & Time
+                  </Label>
+                  <div className="sm:col-span-3">
+                    <Input
+                      id="return-date-time"
+                      type="datetime-local"
+                      value={returnDateTime}
+                      max={getCurrentDateTimeLocal()}
+                      onChange={(e) => setReturnDateTime(e.target.value)}
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Defaults to today and the current time, but you can adjust it before confirming the return.
+                    </p>
+                  </div>
+                </div>
+              </>
             )}
 
             {mode === 'return' ? (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="cost" className="text-right text-xs">Cost (Optional)</Label>
-                <Input
-                  id="cost"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0"
-                  className="col-span-3"
-                  value={cost}
-                  onChange={(e) => setCost(e.target.value)}
-                />
+              <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                Return confirmation keeps the original computed refill cost from when the batch was sent.
               </div>
             ) : null}
           </div>

@@ -15,8 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateSale, useLpgSizes } from "@/hooks/use-sales";
+import { useCustomerLpgPrice, useCustomers } from "@/hooks/use-customers";
 import { ShoppingCart } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { LpgSize } from "@/types/inventory";
 
 interface RecordSaleDialogProps {
@@ -25,30 +25,42 @@ interface RecordSaleDialogProps {
 
 export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialogProps) {
   const { data: lpgSizes } = useLpgSizes();
+  const { data: customers } = useCustomers();
   const [sizeId, setSizeId] = React.useState<string>("");
+  const [customerId, setCustomerId] = React.useState<string>("walk-in");
   const [quantity, setQuantity] = React.useState("1");
+  const [unitPrice, setUnitPrice] = React.useState("");
   const [totalPrice, setTotalPrice] = React.useState("");
   const [type, setType] = React.useState<'sale' | 'exchange'>('sale');
   const [open, setOpen] = React.useState(false);
-  const router = useRouter();
-
   const { mutate: createSale, isPending } = useCreateSale();
+  const normalizedCustomerId = customerId === "walk-in" ? undefined : Number(customerId);
+  const { data: customerPrice, isLoading: isLoadingCustomerPrice } = useCustomerLpgPrice(
+    normalizedCustomerId,
+    sizeId ? Number(sizeId) : undefined
+  );
+  const selectedSize = React.useMemo(
+    () => (lpgSizes || initialLpgSizes)?.find((s) => s.id.toString() === sizeId),
+    [sizeId, lpgSizes, initialLpgSizes]
+  );
 
-  // Auto-calculate total price based on selected size and quantity
   React.useEffect(() => {
-    const selectedSize = (lpgSizes || initialLpgSizes)?.find(s => s.id.toString() === sizeId);
     if (selectedSize) {
-      setTotalPrice((selectedSize.price * Number(quantity)).toString());
+      const resolvedUnitPrice = customerPrice?.price ?? selectedSize.price;
+      setUnitPrice(resolvedUnitPrice.toString());
+      setTotalPrice((resolvedUnitPrice * Number(quantity)).toString());
     }
-  }, [sizeId, quantity, lpgSizes, initialLpgSizes]);
+  }, [selectedSize, quantity, customerPrice]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sizeId) return;
 
     createSale({
+      customer_id: normalizedCustomerId ?? null,
       lpg_size_id: Number(sizeId),
       quantity: Number(quantity),
+      unit_price: Number(unitPrice),
       total_price: Number(totalPrice),
       type: type,
       note: `Sale: ${type}`
@@ -56,7 +68,9 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
       onSuccess: () => {
         setOpen(false);
         setSizeId("");
+        setCustomerId("walk-in");
         setQuantity("1");
+        setUnitPrice("");
         setTotalPrice("");
       }
     });
@@ -101,6 +115,26 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="customer" className="text-right text-xs">
+                Customer
+              </Label>
+              <div className="col-span-3">
+                <Select onValueChange={setCustomerId} value={customerId}>
+                  <SelectTrigger id="customer">
+                    <SelectValue placeholder="Select customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="walk-in">Walk-in / Default Price</SelectItem>
+                    {(customers || []).map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id.toString()}>
+                        {customer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="type" className="text-right text-xs">
                 Type
               </Label>
@@ -131,6 +165,29 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="unit-price" className="text-right text-xs">
+                Unit Price
+              </Label>
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="unit-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={unitPrice}
+                  onChange={(e) => setUnitPrice(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  {isLoadingCustomerPrice
+                    ? "Checking customer price..."
+                    : customerPrice
+                      ? "Using customer-specific price."
+                      : "Using standard LPG size price."}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="price" className="text-right text-xs">
                 Total (PHP)
               </Label>
@@ -145,7 +202,7 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isPending || !sizeId}>
+            <Button type="submit" disabled={isPending || !sizeId || !unitPrice}>
               {isPending ? "Saving..." : "Process Sale"}
             </Button>
           </DialogFooter>

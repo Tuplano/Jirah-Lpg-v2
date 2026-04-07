@@ -1,10 +1,19 @@
+import { CustomersView } from "@/components/customers/customers-view";
+import { getAllCustomers, getAllCustomerLpgPrices } from "@/services/customer-service";
+import { getAllLpgSizes } from "@/services/lpg-size-service";
+
 export default async function CustomersPage() {
+  const [customers, lpgSizes, customerPrices] = await Promise.all([
+    getAllCustomers(),
+    getAllLpgSizes(),
+    getAllCustomerLpgPrices(),
+  ]);
+
   return (
-    <div className="space-y-3 p-6">
-      <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-      <p className="text-muted-foreground">
-        The current database schema does not include a <code>customers</code> table, so this module is disabled.
-      </p>
-    </div>
+    <CustomersView
+      initialCustomers={customers}
+      lpgSizes={lpgSizes}
+      initialCustomerPrices={customerPrices}
+    />
   );
 }

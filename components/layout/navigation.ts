@@ -6,6 +6,7 @@ import {
   Settings,
   ShoppingCart,
   Truck,
+  Users,
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -38,6 +39,7 @@ export const dashboardNavigation: NavigationGroup[] = [
   {
     label: "Management",
     items: [
+      { title: "Customers", url: "/customers", icon: Users },
       { title: "Audit Log", url: "/transactions", icon: History },
     ],
   },

@@ -104,7 +104,12 @@ export function SalesView({ initialSales, lpgSizes: initialLpgSizes }: SalesView
                     </div>
                   </TableCell>
                   <TableCell className="font-medium text-sm">
-                    {sale.lpg_sizes?.name}
+                    <div className="flex flex-col">
+                      <span>{sale.lpg_sizes?.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {sale.customers?.name || "Walk-in customer"}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell className="text-center font-bold">
                     {sale.quantity}

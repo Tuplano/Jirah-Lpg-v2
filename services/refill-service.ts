@@ -112,7 +112,7 @@ export async function recordSentBatch(data: {
   return refillBatch;
 }
 
-export async function recordReturned(id: number, dateReturned: string, cost?: number) {
+export async function recordReturned(id: number, dateReturned: string) {
   const supabase = await createClient();
 
   const { data: batch, error: fetchBatchError } = await supabase
@@ -129,7 +129,7 @@ export async function recordReturned(id: number, dateReturned: string, cost?: nu
     .update({
       status: "completed",
       date_returned: dateReturned,
-      cost: cost ?? batch.cost
+      cost: batch.cost
     })
     .eq("id", id);
 

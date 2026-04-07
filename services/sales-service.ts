@@ -7,7 +7,7 @@ export async function getAllSales(): Promise<Sale[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("sales")
-    .select("*, lpg_sizes(*)")
+    .select("*, lpg_sizes(*), customers(*)")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -15,8 +15,10 @@ export async function getAllSales(): Promise<Sale[]> {
 }
 
 export async function recordSale(data: {
+  customer_id?: number | null;
   lpg_size_id: number;
   quantity: number;
+  unit_price: number;
   total_price: number;
   type: 'sale' | 'exchange';
   note?: string;
@@ -27,8 +29,10 @@ export async function recordSale(data: {
   const { data: sale, error: saleError } = await supabase
     .from("sales")
     .insert({
+      customer_id: data.customer_id ?? null,
       lpg_size_id: data.lpg_size_id,
       quantity: data.quantity,
+      unit_price: data.unit_price,
       total_price: data.total_price,
       type: data.type
     })
@@ -44,7 +48,7 @@ export async function recordSale(data: {
       type: 'sale',
       lpg_size_id: data.lpg_size_id,
       quantity: data.quantity,
-      note: data.note || `Sale: ${data.type}`
+      note: data.note || `Sale: ${data.type}${data.customer_id ? ` for customer ${data.customer_id}` : ""}`
     });
 
   if (txError) throw txError;
@@ -76,4 +80,3 @@ export async function recordSale(data: {
 
   return sale;
 }
-

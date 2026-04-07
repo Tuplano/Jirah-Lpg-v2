@@ -13,8 +13,8 @@ export function useRecordReturned() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, dateReturned, cost }: { id: number, dateReturned: string, cost?: number }) => {
-      return await recordReturned(id, dateReturned, cost);
+    mutationFn: async ({ id, dateReturned }: { id: number, dateReturned: string }) => {
+      return await recordReturned(id, dateReturned);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["refills"] });

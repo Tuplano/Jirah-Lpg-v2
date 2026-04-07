@@ -11,6 +11,16 @@ export interface Customer {
   name: string;
   contact: string;
   address: string;
+  created_at?: string;
+}
+
+export interface CustomerLpgPrice {
+  id: number;
+  customer_id: number;
+  lpg_size_id: number;
+  price: number;
+  created_at: string;
+  lpg_sizes?: LpgSize;
 }
 
 export interface Inventory {
@@ -69,11 +79,14 @@ export type SaleType = 'sale' | 'exchange';
 
 export interface Sale {
   id: number;
+  customer_id?: number | null;
   lpg_size_id: number;
   quantity: number;
+  unit_price?: number;
   total_price: number;
   type: SaleType;
   created_at: string;
+  customers?: Customer | null;
   lpg_sizes?: LpgSize; // Joined data
 }
 
