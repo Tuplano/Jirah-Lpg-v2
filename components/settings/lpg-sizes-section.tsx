@@ -1,11 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { LpgSize } from "@/types/inventory";
-import { Pencil, Plus, Search, Tag } from "lucide-react";
+import { Pencil, Plus, Search } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -38,74 +37,65 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
   );
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">LPG Sizes</h1>
-          <p className="text-muted-foreground">Manage the LPG size catalog used across inventory, sales, and refills.</p>
-        </div>
+    <section className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-lg font-semibold tracking-tight">LPG Catalog</h2>
         <CreateSizeDialog />
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search by LPG size..."
-            className="pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
+        <Input
+          placeholder="Search LPG size..."
+          className="pl-9 h-9 text-sm"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
-      <Card className="overflow-hidden border-border/70 bg-card/95 shadow-sm">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>LPG Size</TableHead>
-                  <TableHead>Kilos</TableHead>
-                  <TableHead>Standard Price</TableHead>
-                  <TableHead>Date Added</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+      <div className="border border-border/50 rounded-lg overflow-hidden shadow-sm">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30 border-b border-border/50">
+              <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Size</TableHead>
+              <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Kilos</TableHead>
+              <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Price</TableHead>
+              <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Added</TableHead>
+              <TableHead className="text-right font-semibold text-xs uppercase tracking-[0.08em]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody className="divide-y divide-border/50">
+            {filteredSizes.length > 0 ? (
+              filteredSizes.map((size) => (
+                <TableRow key={size.id} className="hover:bg-muted/20 transition-colors">
+                  <TableCell className="text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded bg-primary/10 text-primary text-xs font-semibold">
+                        {size.size}
+                      </div>
+                      <span className="font-medium">{size.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-medium text-sm">{size.size} kg</TableCell>
+                  <TableCell className="font-medium text-sm">₱{size.price.toLocaleString()}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {new Date(size.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <EditSizeDialog size={size} />
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSizes.length > 0 ? (
-                  filteredSizes.map((size) => (
-                    <TableRow key={size.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
-                            <Tag className="h-4 w-4" />
-                          </div>
-                          <div className="font-medium">{size.name}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">{size.size} kg</TableCell>
-                      <TableCell className="font-medium">₱{size.price.toLocaleString()}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {new Date(size.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <EditSizeDialog size={size} />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                      No LPG sizes found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground text-sm">
+                  No LPG sizes found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </section>
   );
 }
@@ -136,36 +126,36 @@ function CreateSizeDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
+        <Button size="sm" className="gap-2 h-9">
           <Plus className="h-4 w-4" />
-          Add New Size
+          Add Size
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Define New LPG Size</DialogTitle>
-            <DialogDescription>
-              Create a new LPG size in your catalog. Numeric entries are automatically saved as kg.
+            <DialogTitle className="text-base">New LPG Size</DialogTitle>
+            <DialogDescription className="text-sm">
+              Add a new LPG size to your catalog.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Size
+            <div className="grid gap-2">
+              <Label htmlFor="name" className="text-sm font-medium">
+                Size Name *
               </Label>
               <Input
                 id="name"
-                placeholder="e.g. 11 or 11kg"
-                className="col-span-3"
+                placeholder="e.g. 11kg or Mini"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="h-9 text-sm"
                 required
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="size" className="text-right">
-                Kilos
+            <div className="grid gap-2">
+              <Label htmlFor="size" className="text-sm font-medium">
+                Kilos *
               </Label>
               <Input
                 id="size"
@@ -173,15 +163,15 @@ function CreateSizeDialog() {
                 min="0"
                 step="0.01"
                 placeholder="11"
-                className="col-span-3"
                 value={size}
                 onChange={(e) => setSize(e.target.value)}
+                className="h-9 text-sm"
                 required
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="price" className="text-right">
-                Price (₱)
+            <div className="grid gap-2">
+              <Label htmlFor="price" className="text-sm font-medium">
+                Price (₱) *
               </Label>
               <Input
                 id="price"
@@ -189,16 +179,16 @@ function CreateSizeDialog() {
                 min="0"
                 step="0.01"
                 placeholder="1000"
-                className="col-span-3"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
+                className="h-9 text-sm"
                 required
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Creating..." : "Create Size"}
+            <Button type="submit" disabled={isPending} size="sm">
+              {isPending ? "Creating..." : "Create"}
             </Button>
           </DialogFooter>
         </form>
@@ -242,29 +232,29 @@ function EditSizeDialog({ size }: { size: LpgSize }) {
           <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Edit LPG Size</DialogTitle>
-            <DialogDescription>
-              Update the LPG size name and standard price used throughout the app.
+            <DialogTitle className="text-base">Edit LPG Size</DialogTitle>
+            <DialogDescription className="text-sm">
+              Update size details and pricing.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor={`edit-name-${size.id}`} className="text-right">
-                Size
+            <div className="grid gap-2">
+              <Label htmlFor={`edit-name-${size.id}`} className="text-sm font-medium">
+                Size Name
               </Label>
               <Input
                 id={`edit-name-${size.id}`}
-                className="col-span-3"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="h-9 text-sm"
                 required
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor={`edit-size-${size.id}`} className="text-right">
+            <div className="grid gap-2">
+              <Label htmlFor={`edit-size-${size.id}`} className="text-sm font-medium">
                 Kilos
               </Label>
               <Input
@@ -272,14 +262,14 @@ function EditSizeDialog({ size }: { size: LpgSize }) {
                 type="number"
                 min="0"
                 step="0.01"
-                className="col-span-3"
                 value={kilos}
                 onChange={(e) => setKilos(e.target.value)}
+                className="h-9 text-sm"
                 required
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor={`edit-price-${size.id}`} className="text-right">
+            <div className="grid gap-2">
+              <Label htmlFor={`edit-price-${size.id}`} className="text-sm font-medium">
                 Price (₱)
               </Label>
               <Input
@@ -287,16 +277,16 @@ function EditSizeDialog({ size }: { size: LpgSize }) {
                 type="number"
                 min="0"
                 step="0.01"
-                className="col-span-3"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
+                className="h-9 text-sm"
                 required
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Saving..." : "Save Changes"}
+            <Button type="submit" disabled={isPending} size="sm">
+              {isPending ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>
         </form>

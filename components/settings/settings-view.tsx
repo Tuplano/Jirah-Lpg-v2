@@ -30,7 +30,11 @@ export function SettingsView({ initialLpgSizes }: SettingsViewProps) {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage LPG catalog and pricing.</p>
+      </div>
       {settingsSections.map((section) => (
         <React.Fragment key={section.id}>{section.content}</React.Fragment>
       ))}

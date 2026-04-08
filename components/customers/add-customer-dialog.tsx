@@ -41,51 +41,54 @@ export function AddCustomerDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button size="sm" className="gap-2 h-9">
           <Plus className="h-4 w-4" />
           Add Customer
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Add New Customer</DialogTitle>
-            <DialogDescription>
-              Create a new customer profile for tracking sales and history.
+            <DialogTitle className="text-base">New Customer</DialogTitle>
+            <DialogDescription className="text-sm">
+              Add a new customer to your database.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right text-xs">Name</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="name" className="text-sm font-medium">Customer Name *</Label>
               <Input
                 id="name"
-                className="col-span-3"
+                placeholder="John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="h-9 text-sm"
                 required
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="contact" className="text-right text-xs">Contact</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="contact" className="text-sm font-medium">Contact Number</Label>
               <Input
                 id="contact"
-                className="col-span-3"
+                placeholder="09xxxxxxxxx"
                 value={contact}
                 onChange={(e) => setContact(e.target.value)}
+                className="h-9 text-sm"
               />
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="address" className="text-right text-xs">Address</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="address" className="text-sm font-medium">Address</Label>
               <Input
                 id="address"
-                className="col-span-3"
+                placeholder="Street, Barangay, City"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                className="h-9 text-sm"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending} size="sm">
               {isPending ? "Adding..." : "Add Customer"}
             </Button>
           </DialogFooter>

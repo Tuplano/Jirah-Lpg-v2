@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Truck, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { Search, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { useRefills } from "@/hooks/use-refills";
 import { useLpgSizes } from "@/hooks/use-sales";
 import { useInventory } from "@/hooks/use-inventory";
@@ -67,8 +67,8 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Refills</h1>
-          <p className="text-muted-foreground">Track outgoing and returned refill products with suppliers.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Refills</h1>
+          <p className="text-sm text-muted-foreground">Track refill batches and returns.</p>
         </div>
         <RecordRefillDialog 
           lpgSizes={lpgSizes || initialLpgSizes} 
@@ -77,56 +77,51 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
         />
       </div>
 
-
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search by product, status, or note..." 
-            className="pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground/60" />
+        <Input 
+          placeholder="Search by product, status, or note..." 
+          className="pl-9 h-9 text-sm"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
-      <div className="rounded-lg border bg-card">
+      <div className="border border-border/50 rounded-lg overflow-hidden shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Status</TableHead>
-              <TableHead>Products</TableHead>
-              <TableHead className="text-center">Total Qty</TableHead>
-              <TableHead>Date Sent</TableHead>
-              <TableHead>Date Returned</TableHead>
-              <TableHead className="text-right">Cost</TableHead>
+            <TableRow className="bg-muted/30 border-b border-border/50">
+              <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Status</TableHead>
+              <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Products</TableHead>
+              <TableHead className="text-center font-semibold text-xs uppercase tracking-[0.08em]">Qty</TableHead>
+              <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Sent</TableHead>
+              <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Returned</TableHead>
+              <TableHead className="text-right font-semibold text-xs uppercase tracking-[0.08em]">Cost</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="divide-y divide-border/50">
             {filteredRefills.length > 0 ? (
               filteredRefills.map((refill) => (
-                <TableRow key={refill.id}>
-                  <TableCell>
+                <TableRow key={refill.id} className="hover:bg-muted/20 transition-colors">
+                  <TableCell className="text-sm">
                     <Badge variant="outline" className={cn(
                       "capitalize",
                       refill.status === 'completed'
                         ? "border-primary/20 bg-primary/10 text-primary"
-                        : "border-secondary bg-secondary text-secondary-foreground"
+                        : "border-accent/20 bg-accent/10 text-accent-foreground"
                     )}>
                       {refill.status}
                     </Badge>
                   </TableCell>
 
-                  <TableCell className="font-medium text-sm">
-                    <div className="space-y-1">
+                  <TableCell className="text-sm">
+                    <div className="space-y-0.5">
                       {refill.items.map((item) => (
-                        <div key={item.id}>
-                          {item.quantity}x {item.lpg_sizes?.name}
+                        <div key={item.id} className="text-xs">
+                          <span className="font-medium">{item.quantity}x {item.lpg_sizes?.name}</span>
                           {item.lpg_sizes ? (
-                            <span className="text-muted-foreground">
-                              {" "}
-                              at ₱{item.price_per_kilo.toLocaleString()}/kg = ₱
-                              {(item.price_per_kilo * item.lpg_sizes.size * item.quantity).toLocaleString(undefined, {
+                            <span className="text-muted-foreground text-xs block">
+                              ₱{(item.price_per_kilo * item.lpg_sizes.size * item.quantity).toLocaleString(undefined, {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -136,7 +131,7 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
                       ))}
                     </div>
                   </TableCell>
-                  <TableCell className="text-center font-bold">
+                  <TableCell className="text-center font-semibold text-sm">
                     {refill.total_quantity}
                   </TableCell>
                   <TableCell className="text-sm">
@@ -147,22 +142,22 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
                   </TableCell>
                   <TableCell className="text-sm">
                     {refill.date_returned ? (
-                      <div className="flex items-center gap-1.5 text-secondary-foreground">
+                      <div className="flex items-center gap-1.5 text-destructive">
                         <ArrowDownLeft className="h-3 w-3" />
                         {new Date(refill.date_returned).toLocaleDateString()}
                       </div>
                     ) : (
-                      <span className="text-muted-foreground italic">-</span>
+                      <span className="text-muted-foreground italic text-xs">-</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right font-medium">
+                  <TableCell className="text-right font-semibold text-sm">
                     {refill.cost ? `₱${refill.cost.toLocaleString()}` : '-'}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground text-sm">
                   No refill records found.
                 </TableCell>
               </TableRow>
