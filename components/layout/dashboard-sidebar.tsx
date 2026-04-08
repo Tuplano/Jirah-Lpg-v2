@@ -51,7 +51,7 @@ export function DashboardSidebar() {
           </div>
         </motion.div>
       </SidebarHeader>
-      <SidebarContent className="flex flex-col gap-2">
+      <SidebarContent className="flex flex-col gap-0">
         {dashboardNavigation.map((group, groupIndex) => {
           const isGroupActive = group.items.some(item => 
             item.url === "/" ? pathname === "/" : pathname.startsWith(item.url)
@@ -69,16 +69,16 @@ export function DashboardSidebar() {
                 defaultOpen={isGroupActive}
                 className="group/collapsible"
               >
-                <SidebarGroup className="py-2">
+                <SidebarGroup className="py-0">
                   <SidebarGroupLabel asChild>
-                    <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground hover:text-foreground transition-colors">
+                    <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground hover:text-foreground transition-colors">
                       {group.label}
                       <ChevronRight className="ml-auto h-3.5 w-3.5 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </CollapsibleTrigger>
                   </SidebarGroupLabel>
                   <CollapsibleContent>
-                    <SidebarGroupContent className="mt-1">
-                      <SidebarMenu className="gap-1">
+                    <SidebarGroupContent className="pt-1">
+                      <SidebarMenu className="gap-0.5">
                         {group.items.map((item) => {
                           const isActive = item.url === "/" ? pathname === "/" : pathname.startsWith(item.url);
                           

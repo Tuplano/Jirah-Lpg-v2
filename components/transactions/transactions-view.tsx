@@ -66,7 +66,7 @@ export function TransactionsView({ initialTransactions, lpgSizes }: Transactions
       case 'adjust':
         return (
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-zinc-100 flex items-center justify-center text-zinc-700">
+            <div className="h-6 w-6 rounded bg-muted flex items-center justify-center text-foreground">
               <RefreshCcw className="h-3 w-3" />
             </div>
             <span className="text-sm font-medium">Adjustment</span>

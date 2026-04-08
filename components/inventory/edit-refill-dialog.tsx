@@ -1,24 +1,26 @@
 "use client";
 
 import * as React from "react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useRecordSentBatch } from "@/hooks/use-refills";
-import { RefreshCcw, Plus, Trash2 } from "lucide-react";
-import { Inventory, LpgSize } from "@/types/inventory";
+import { useUpdateRefill } from "@/hooks/use-refills";
+import { Plus, Trash2 } from "lucide-react";
+import { Inventory, LpgSize, RefillBatch } from "@/types/inventory";
 
-interface RecordRefillDialogProps {
+interface EditRefillDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  refill: RefillBatch | null;
   lpgSizes: LpgSize[];
   inventory: Inventory[];
 }
@@ -36,14 +38,11 @@ function getCurrentDateTimeLocal() {
   return new Date(now.getTime() - timezoneOffset).toISOString().slice(0, 16);
 }
 
-export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogProps) {
-  const [products, setProducts] = React.useState<RefillProductRow[]>([
-    { id: crypto.randomUUID(), sizeId: "", quantity: "1", pricePerKilo: "" },
-  ]);
+export function EditRefillDialog({ open, onOpenChange, refill, lpgSizes, inventory }: EditRefillDialogProps) {
+  const [products, setProducts] = React.useState<RefillProductRow[]>([]);
   const [sendDateTime, setSendDateTime] = React.useState(getCurrentDateTimeLocal);
-  const [open, setOpen] = React.useState(false);
+  const { mutate: updateRefill, isPending } = useUpdateRefill();
 
-  const { mutate: recordSentBatch, isPending } = useRecordSentBatch();
   const lpgSizeMap = React.useMemo(
     () => new Map(lpgSizes.map((size) => [size.id, size])),
     [lpgSizes]
@@ -52,21 +51,39 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
     () => new Map(inventory.map((item) => [item.lpg_size_id, item])),
     [inventory]
   );
-  const canSubmitSend = products.every(
+
+  React.useEffect(() => {
+    if (open && refill) {
+      // Initialize products from existing refill
+      const initialProducts = (refill.refill_batch_items || []).map((item) => ({
+        id: crypto.randomUUID(),
+        sizeId: item.lpg_size_id.toString(),
+        quantity: item.quantity.toString(),
+        pricePerKilo: item.price_per_kilo.toString(),
+      }));
+      setProducts(initialProducts.length > 0 ? initialProducts : [{
+        id: crypto.randomUUID(),
+        sizeId: "",
+        quantity: "1",
+        pricePerKilo: "",
+      }]);
+      setSendDateTime(new Date(refill.date_sent).toISOString().slice(0, 16));
+    }
+  }, [open, refill]);
+
+  const canSubmit = products.every(
     (product) => {
-      const sizeId = Number(product.sizeId);
-      const availableEmpty = inventoryMap.get(sizeId)?.empty_count ?? 0;
       const quantity = Number(product.quantity);
 
       return (
         product.sizeId &&
         quantity > 0 &&
-        quantity <= availableEmpty &&
         product.pricePerKilo !== "" &&
         Number(product.pricePerKilo) >= 0
       );
     }
   );
+
   const sendTotalCost = products.reduce((sum, product) => {
     const selectedSize = lpgSizeMap.get(Number(product.sizeId));
 
@@ -76,11 +93,6 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
 
     return sum + Number(product.quantity || 0) * Number(product.pricePerKilo || 0) * selectedSize.size;
   }, 0);
-
-  const resetSendForm = () => {
-    setProducts([{ id: crypto.randomUUID(), sizeId: "", quantity: "1", pricePerKilo: "" }]);
-    setSendDateTime(getCurrentDateTimeLocal());
-  };
 
   const addProductRow = () => {
     setProducts((current) => [
@@ -97,13 +109,6 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
         }
 
         const nextProduct = { ...product, ...updates };
-        const availableEmpty = inventoryMap.get(Number(nextProduct.sizeId))?.empty_count ?? 0;
-        const quantity = Number(nextProduct.quantity);
-
-        if (nextProduct.quantity !== "" && quantity > availableEmpty) {
-          nextProduct.quantity = availableEmpty > 0 ? String(availableEmpty) : "0";
-        }
-
         return nextProduct;
       })
     );
@@ -121,43 +126,33 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!canSubmitSend) return;
-    recordSentBatch({
-      items: products.map((product) => ({
-        lpg_size_id: Number(product.sizeId),
-        quantity: Number(product.quantity),
-        price_per_kilo: Number(product.pricePerKilo),
-      })),
-      date_sent: new Date(sendDateTime).toISOString()
+
+    if (!refill || !canSubmit) return;
+    updateRefill({
+      id: refill.id,
+      data: {
+        items: products.map((product) => ({
+          lpg_size_id: Number(product.sizeId),
+          quantity: Number(product.quantity),
+          price_per_kilo: Number(product.pricePerKilo),
+        })),
+        date_sent: new Date(sendDateTime).toISOString()
+      }
     }, {
       onSuccess: () => {
-        setOpen(false);
-        resetSendForm();
+        onOpenChange(false);
       }
     });
   };
 
-  React.useEffect(() => {
-    if (!open) {
-      resetSendForm();
-    }
-  }, [open]);
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
-          <RefreshCcw className="h-4 w-4" />
-          Record Refill
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Record Refill</DialogTitle>
+            <DialogTitle>Edit Refill Batch</DialogTitle>
             <DialogDescription>
-              Send multiple LPG products in one refill batch.
+              Update the products and details for this refill batch.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -174,7 +169,7 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
                   onChange={(e) => setSendDateTime(e.target.value)}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Defaults to today and the current time, but you can adjust it before saving.
+                  When was this batch sent for refill?
                 </p>
               </div>
             </div>
@@ -183,7 +178,7 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
               <div>
                 <Label className="text-sm font-medium">Refill Products</Label>
                 <p className="text-xs text-muted-foreground">
-                  Add all LPG sizes included in this refill shipment.
+                  Update the LPG sizes included in this refill shipment.
                 </p>
               </div>
               <Button type="button" variant="outline" className="gap-2" onClick={addProductRow}>
@@ -195,12 +190,9 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
             <div className="space-y-3">
               {products.map((product, index) => {
                 const selectedSize = lpgSizeMap.get(Number(product.sizeId));
-                const availableEmpty = inventoryMap.get(Number(product.sizeId))?.empty_count ?? 0;
                 const lineTotal = selectedSize
                   ? Number(product.quantity || 0) * Number(product.pricePerKilo || 0) * selectedSize.size
                   : 0;
-                const quantity = Number(product.quantity);
-                const exceedsAvailable = product.sizeId !== "" && quantity > availableEmpty;
 
                 return (
                   <div
@@ -211,7 +203,7 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
                       <div>
                         <p className="text-sm font-medium">Product {index + 1}</p>
                         <p className="text-xs text-muted-foreground">
-                          Select the LPG size, set the quantity, and enter today&apos;s refill rate.
+                          Update the LPG size, quantity, and price.
                         </p>
                       </div>
                       <Button
@@ -264,14 +256,10 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
                         <Input
                           type="number"
                           min="1"
-                          max={availableEmpty}
                           value={product.quantity}
                           className="h-11"
                           onChange={(e) => updateProductRow(product.id, { quantity: e.target.value })}
                         />
-                        <p className={`text-xs ${exceedsAvailable ? "text-destructive" : "text-muted-foreground"}`}>
-                          Available empty: {availableEmpty}
-                        </p>
                       </div>
 
                       <div className="space-y-2">
@@ -327,14 +315,16 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
             </div>
           </div>
           <DialogFooter>
-            <Button 
-              type="submit" 
-              disabled={isPending || !canSubmitSend}
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isPending || !canSubmit}
             >
-              {isPending ? "Recording..." : "Record Refills"}
+              {isPending ? "Updating..." : "Update Refill"}
             </Button>
           </DialogFooter>
-
         </form>
       </DialogContent>
     </Dialog>

@@ -12,11 +12,30 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, ArrowUpRight, ArrowDownLeft } from "lucide-react";
-import { useRefills } from "@/hooks/use-refills";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Search, ArrowUpRight, ArrowDownLeft, MoreHorizontal, Trash2, Edit, RotateCcw } from "lucide-react";
+import { useRefills, useDeleteRefill } from "@/hooks/use-refills";
 import { useLpgSizes } from "@/hooks/use-sales";
 import { useInventory } from "@/hooks/use-inventory";
 import { RecordRefillDialog } from "./record-refill-dialog";
+import { ReturnRefillDialog } from "./return-refill-dialog";
+import { EditRefillDialog } from "./edit-refill-dialog";
 import { cn } from "@/lib/utils";
 import { Inventory, LpgSize, RefillBatch, RefillProductSummary } from "@/types/inventory";
 
@@ -30,7 +49,13 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
   const { data: refills, isLoading } = useRefills();
   const { data: lpgSizes } = useLpgSizes();
   const { data: inventory } = useInventory();
+  const { mutate: deleteRefill, isPending: isDeleting } = useDeleteRefill();
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [returnDialogOpen, setReturnDialogOpen] = React.useState(false);
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [selectedRefill, setSelectedRefill] = React.useState<RefillBatch | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [refillToDelete, setRefillToDelete] = React.useState<RefillBatch | null>(null);
   const refillBatches = (refills || initialRefills) as RefillBatch[];
   const summarizedRefills: RefillProductSummary[] = refillBatches.map((batch) => {
     const items = batch.refill_batch_items || [];
@@ -57,8 +82,6 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
     refill.note?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const pendingRefills = refillBatches.filter((r) => r.status === 'pending');
-
   if (isLoading && !initialRefills) {
     return <div className="p-8 text-center text-muted-foreground">Loading refills history...</div>;
   }
@@ -73,7 +96,6 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
         <RecordRefillDialog 
           lpgSizes={lpgSizes || initialLpgSizes} 
           inventory={inventory || initialInventory}
-          pendingRefills={pendingRefills}
         />
       </div>
 
@@ -97,6 +119,7 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
               <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Sent</TableHead>
               <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Returned</TableHead>
               <TableHead className="text-right font-semibold text-xs uppercase tracking-[0.08em]">Cost</TableHead>
+              <TableHead className="text-right font-semibold text-xs uppercase tracking-[0.08em]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y divide-border/50">
@@ -104,11 +127,11 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
               filteredRefills.map((refill) => (
                 <TableRow key={refill.id} className="hover:bg-muted/20 transition-colors">
                   <TableCell className="text-sm">
-                    <Badge variant="outline" className={cn(
-                      "capitalize",
+                    <Badge className={cn(
+                      "capitalize font-medium",
                       refill.status === 'completed'
-                        ? "border-primary/20 bg-primary/10 text-primary"
-                        : "border-accent/20 bg-accent/10 text-accent-foreground"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-accent text-accent-foreground"
                     )}>
                       {refill.status}
                     </Badge>
@@ -135,15 +158,15 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
                     {refill.total_quantity}
                   </TableCell>
                   <TableCell className="text-sm">
-                    <div className="flex items-center gap-1.5 text-accent-foreground">
-                      <ArrowUpRight className="h-3 w-3" />
+                    <div className="flex items-center gap-1.5 text-foreground">
+                      <ArrowUpRight className="h-3 w-3 text-accent" />
                       {new Date(refill.date_sent).toLocaleDateString()}
                     </div>
                   </TableCell>
                   <TableCell className="text-sm">
                     {refill.date_returned ? (
-                      <div className="flex items-center gap-1.5 text-destructive">
-                        <ArrowDownLeft className="h-3 w-3" />
+                      <div className="flex items-center gap-1.5 text-foreground">
+                        <ArrowDownLeft className="h-3 w-3 text-destructive" />
                         {new Date(refill.date_returned).toLocaleDateString()}
                       </div>
                     ) : (
@@ -153,11 +176,55 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
                   <TableCell className="text-right font-semibold text-sm">
                     {refill.cost ? `₱${refill.cost.toLocaleString()}` : '-'}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {refill.status === 'pending' && (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedRefill(refillBatches.find(b => b.id === parseInt(refill.id.split('-')[1])) || null);
+                                setReturnDialogOpen(true);
+                              }}
+                            >
+                              <RotateCcw className="h-4 w-4 mr-2" />
+                              Return
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedRefill(refillBatches.find(b => b.id === parseInt(refill.id.split('-')[1])) || null);
+                                setEditDialogOpen(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                          </>
+                        )}
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setRefillToDelete(refillBatches.find(b => b.id === parseInt(refill.id.split('-')[1])) || null);
+                            setDeleteDialogOpen(true);
+                          }}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground text-sm">
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground text-sm">
                   No refill records found.
                 </TableCell>
               </TableRow>
@@ -165,6 +232,50 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
           </TableBody>
         </Table>
       </div>
+
+      <ReturnRefillDialog
+        open={returnDialogOpen}
+        onOpenChange={setReturnDialogOpen}
+        refill={selectedRefill}
+      />
+
+      <EditRefillDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        refill={selectedRefill}
+        lpgSizes={lpgSizes || initialLpgSizes}
+        inventory={inventory || initialInventory}
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Refill Batch</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this refill batch? This action cannot be undone and will reverse all inventory changes made when this batch was sent.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (refillToDelete) {
+                  deleteRefill(refillToDelete.id, {
+                    onSuccess: () => {
+                      setDeleteDialogOpen(false);
+                      setRefillToDelete(null);
+                    }
+                  });
+                }
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
