@@ -4,7 +4,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Customer, CustomerLpgPrice, LpgSize } from "@/types";
-import { Users, Search, Tags } from "lucide-react";
+import { Users, Search, Tags, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -16,8 +16,27 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useCustomerLpgPrices, useCustomers, useUpsertCustomerLpgPrice } from "@/hooks/use-customers";
+import { useCustomerLpgPrices, useCustomers, useUpsertCustomerLpgPrice, useDeleteCustomer } from "@/hooks/use-customers";
 import { AddCustomerDialog } from "./add-customer-dialog";
+import { EditCustomerDialog } from "./edit-customer-dialog";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { MoreHorizontal, Edit } from "lucide-react";
 
 interface CustomersViewProps {
   initialCustomers: Customer[];
@@ -28,7 +47,12 @@ interface CustomersViewProps {
 export function CustomersView({ initialCustomers, lpgSizes, initialCustomerPrices }: CustomersViewProps) {
   const { data: customers, isLoading } = useCustomers();
   const { data: customerPrices } = useCustomerLpgPrices();
+  const { mutate: deleteCustomer, isPending: isDeleting } = useDeleteCustomer();
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
+
   const prices = customerPrices || initialCustomerPrices;
 
   const filteredCustomers = (customers || initialCustomers).filter((c) =>
@@ -101,13 +125,40 @@ export function CustomersView({ initialCustomers, lpgSizes, initialCustomerPrice
                         <p className="truncate text-xs max-w-xs">{customer.address}</p>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <ManageCustomerPricesDialog
-                            customer={customer}
-                            lpgSizes={lpgSizes}
-                            customerPrices={prices}
-                          />
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedCustomer(customer);
+                                setEditDialogOpen(true);
+                              }}
+                              className="gap-2 cursor-pointer"
+                            >
+                              <Edit className="h-4 w-4 text-muted-foreground" />
+                              <span>Edit Details</span>
+                            </DropdownMenuItem>
+                            <ManageCustomerPricesDialog
+                              customer={customer}
+                              lpgSizes={lpgSizes}
+                              customerPrices={prices}
+                            />
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelectedCustomer(customer);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="text-destructive gap-2 cursor-pointer focus:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span>Delete Customer</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   );
@@ -125,6 +176,45 @@ export function CustomersView({ initialCustomers, lpgSizes, initialCustomerPrice
           <p className="text-xs text-muted-foreground mt-1">Try adjusting your search or add a new customer to get started.</p>
         </div>
       )}
+
+      {/* Dialogs */}
+      <EditCustomerDialog 
+        open={editDialogOpen} 
+        onOpenChange={setEditDialogOpen} 
+        customer={selectedCustomer} 
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Customer</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-semibold text-foreground">{selectedCustomer?.name}</span>? 
+              This will remove all their data, including custom pricing history. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (selectedCustomer) {
+                  deleteCustomer(selectedCustomer.id, {
+                    onSuccess: () => {
+                      setDeleteDialogOpen(false);
+                      setSelectedCustomer(null);
+                    }
+                  });
+                }
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -187,9 +277,10 @@ function ManageCustomerPricesDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
-          <Tags className="h-3.5 w-3.5" />
-        </Button>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="gap-2 cursor-pointer">
+          <Tags className="h-4 w-4 text-muted-foreground" />
+          <span>Manage Pricing</span>
+        </DropdownMenuItem>
       </DialogTrigger>
       <DialogContent className="max-h-[80vh] overflow-y-auto">
         <form onSubmit={handleSave}>
@@ -229,6 +320,9 @@ function ManageCustomerPricesDialog({
           </div>
 
           <DialogFooter>
+            <Button variant="ghost" type="button" onClick={() => setOpen(false)} disabled={isPending} size="sm">
+              Cancel
+            </Button>
             <Button type="submit" disabled={isPending} size="sm">
               {isPending ? "Saving..." : "Save"}
             </Button>

@@ -99,3 +99,13 @@ export async function updateLpgSize(id: number, updates: Partial<LpgSize>): Prom
   if (error) throw error;
   return data;
 }
+
+export async function deleteLpgSize(id: number): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("lpg_sizes")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}

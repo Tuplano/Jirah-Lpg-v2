@@ -65,3 +65,26 @@ export async function upsertCustomerLpgPrice(data: {
   if (error) throw error;
   return priceRow;
 }
+
+export async function updateCustomer(id: number, data: Partial<Customer>): Promise<Customer> {
+  const supabase = await createClient();
+  const { data: customer, error } = await supabase
+    .from("customers")
+    .update(data)
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return customer;
+}
+
+export async function deleteCustomer(id: number): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("customers")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}

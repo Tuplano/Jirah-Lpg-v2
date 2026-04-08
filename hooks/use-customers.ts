@@ -5,6 +5,8 @@ import {
   getAllCustomers,
   getCustomerLpgPrice,
   upsertCustomerLpgPrice,
+  updateCustomer,
+  deleteCustomer,
 } from "@/services/customer-service";
 import { toast } from "sonner";
 
@@ -66,6 +68,42 @@ export function useUpsertCustomerLpgPrice() {
     onError: (error) => {
       console.error("Failed to save customer LPG price:", error);
       toast.error("Failed to save customer price.");
+    }
+  });
+}
+
+export function useUpdateCustomer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return await updateCustomer(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      toast.success("Customer updated successfully.");
+    },
+    onError: (error) => {
+      console.error("Failed to update customer:", error);
+      toast.error("Failed to update customer details.");
+    }
+  });
+}
+
+export function useDeleteCustomer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      return await deleteCustomer(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customers"] });
+      toast.success("Customer removed.");
+    },
+    onError: (error) => {
+      console.error("Failed to delete customer:", error);
+      toast.error("Failed to remove customer. They may have active transactions.");
     }
   });
 }

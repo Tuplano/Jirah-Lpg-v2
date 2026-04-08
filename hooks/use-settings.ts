@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAllLpgSizes, createLpgSize, updateLpgSize } from "@/services/lpg-size-service";
+import { getAllLpgSizes, createLpgSize, updateLpgSize, deleteLpgSize } from "@/services/lpg-size-service";
 import { toast } from "sonner";
 
 export function useLpgSizes() {
@@ -46,6 +46,26 @@ export function useUpdateLpgSize() {
     onError: (error) => {
       console.error("Failed to update LPG size:", error);
       toast.error("Failed to update LPG size. Please try again.");
+    }
+  });
+}
+
+export function useDeleteLpgSize() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      return await deleteLpgSize(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lpg-sizes"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["unmanaged-sizes"] });
+      toast.success("LPG size removed from catalog.");
+    },
+    onError: (error) => {
+      console.error("Failed to delete LPG size:", error);
+      toast.error("Failed to remove LPG size. It may be in use.");
     }
   });
 }

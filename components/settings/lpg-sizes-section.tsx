@@ -4,18 +4,24 @@ import * as React from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { LpgSize } from "@/types";
-import { Pencil, Plus, Search } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, MoreHorizontal, Edit } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { useCreateLpgSize, useUpdateLpgSize } from "@/hooks/use-settings";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useCreateLpgSize, useUpdateLpgSize, useDeleteLpgSize } from "@/hooks/use-settings";
 import {
   Table,
   TableBody,
@@ -24,6 +30,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface LpgSizesSectionProps {
   sizes: LpgSize[];
@@ -31,6 +39,10 @@ interface LpgSizesSectionProps {
 
 export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
   const [searchTerm, setSearchTerm] = React.useState("");
+  const [editDialogOpen, setEditDialogOpen] = React.useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [selectedSize, setSelectedSize] = React.useState<LpgSize | null>(null);
+  const { mutate: deleteSize, isPending: isDeleting } = useDeleteLpgSize();
 
   const filteredSizes = sizes.filter((size) =>
     size.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -49,7 +61,7 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
           placeholder="Search LPG size..."
           className="pl-9 h-9 text-sm"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
         />
       </div>
 
@@ -82,7 +94,35 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
                     {new Date(size.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    <EditSizeDialog size={size} />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedSize(size);
+                            setEditDialogOpen(true);
+                          }}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <Edit className="h-4 w-4 text-muted-foreground" />
+                          <span>Edit Details</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedSize(size);
+                            setDeleteDialogOpen(true);
+                          }}
+                          className="text-destructive gap-2 cursor-pointer focus:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Delete Size</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
@@ -96,6 +136,45 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Dialogs */}
+      <EditSizeDialog 
+        open={editDialogOpen} 
+        onOpenChange={setEditDialogOpen} 
+        size={selectedSize} 
+      />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete LPG Size</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <span className="font-semibold text-foreground">{selectedSize?.name}</span>? 
+              This action cannot be undone and may fail if the size is linked to existing transactions.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e: React.MouseEvent) => {
+                e.preventDefault();
+                if (selectedSize) {
+                  deleteSize(selectedSize.id, {
+                    onSuccess: () => {
+                      setDeleteDialogOpen(false);
+                      setSelectedSize(null);
+                    }
+                  });
+                }
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }
@@ -148,7 +227,7 @@ function CreateSizeDialog() {
                 id="name"
                 placeholder="e.g. 11kg or Mini"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                 className="h-9 text-sm"
                 required
               />
@@ -164,7 +243,7 @@ function CreateSizeDialog() {
                 step="0.01"
                 placeholder="11"
                 value={size}
-                onChange={(e) => setSize(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSize(e.target.value)}
                 className="h-9 text-sm"
                 required
               />
@@ -180,13 +259,16 @@ function CreateSizeDialog() {
                 step="0.01"
                 placeholder="1000"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
                 className="h-9 text-sm"
                 required
               />
             </div>
           </div>
           <DialogFooter>
+            <Button variant="ghost" type="button" onClick={() => setOpen(false)} disabled={isPending} size="sm">
+              Cancel
+            </Button>
             <Button type="submit" disabled={isPending} size="sm">
               {isPending ? "Creating..." : "Create"}
             </Button>
@@ -197,20 +279,21 @@ function CreateSizeDialog() {
   );
 }
 
-function EditSizeDialog({ size }: { size: LpgSize }) {
-  const [name, setName] = React.useState(size.name);
-  const [price, setPrice] = React.useState(size.price.toString());
-  const [kilos, setKilos] = React.useState(size.size.toString());
-  const [open, setOpen] = React.useState(false);
+function EditSizeDialog({ open, onOpenChange, size }: { open: boolean; onOpenChange: (open: boolean) => void; size: LpgSize | null }) {
+  const [name, setName] = React.useState("");
+  const [price, setPrice] = React.useState("");
+  const [kilos, setKilos] = React.useState("");
   const { mutate: updateSize, isPending } = useUpdateLpgSize();
 
   React.useEffect(() => {
-    if (!open) {
+    if (open && size) {
       setName(size.name);
       setPrice(size.price.toString());
       setKilos(size.size.toString());
     }
-  }, [open, size.name, size.price, size.size]);
+  }, [open, size]);
+
+  if (!size) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,19 +302,14 @@ function EditSizeDialog({ size }: { size: LpgSize }) {
       { id: size.id, name, price: Number(price), size: Number(kilos) },
       {
         onSuccess: () => {
-          setOpen(false);
+          onOpenChange(false);
         },
       }
     );
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <Pencil className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
@@ -248,7 +326,7 @@ function EditSizeDialog({ size }: { size: LpgSize }) {
               <Input
                 id={`edit-name-${size.id}`}
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                 className="h-9 text-sm"
                 required
               />
@@ -263,7 +341,7 @@ function EditSizeDialog({ size }: { size: LpgSize }) {
                 min="0"
                 step="0.01"
                 value={kilos}
-                onChange={(e) => setKilos(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setKilos(e.target.value)}
                 className="h-9 text-sm"
                 required
               />
@@ -278,13 +356,16 @@ function EditSizeDialog({ size }: { size: LpgSize }) {
                 min="0"
                 step="0.01"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
                 className="h-9 text-sm"
                 required
               />
             </div>
           </div>
           <DialogFooter>
+            <Button variant="ghost" type="button" onClick={() => onOpenChange(false)} disabled={isPending} size="sm">
+              Cancel
+            </Button>
             <Button type="submit" disabled={isPending} size="sm">
               {isPending ? "Saving..." : "Save"}
             </Button>
