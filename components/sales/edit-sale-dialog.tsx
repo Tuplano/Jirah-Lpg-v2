@@ -1,26 +1,28 @@
 "use client";
 
 import * as React from "react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCreateSale, useLpgSizes } from "@/hooks/use-sales";
+import { useUpdateSale } from "@/hooks/use-sales";
 import { useCustomers } from "@/hooks/use-customers";
-import { ShoppingCart, Plus, Trash2 } from "lucide-react";
-import { LpgSize } from "@/types/inventory";
+import { Sale, LpgSize } from "@/types/inventory";
 import { getCustomerLpgPrice } from "@/services/customer-service";
+import { Plus, Trash2 } from "lucide-react";
 
-interface RecordSaleDialogProps {
+interface EditSaleDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  sale: Sale | null;
   lpgSizes?: LpgSize[];
 }
 
@@ -31,18 +33,33 @@ interface SaleLineItem {
   unitPrice: string;
 }
 
-export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialogProps) {
-  const { data: lpgSizes } = useLpgSizes();
-  const { data: customers } = useCustomers();
-  const [customerId, setCustomerId] = React.useState<string>("walk-in");
-  const [type, setType] = React.useState<'sale' | 'exchange'>('sale');
-  const [open, setOpen] = React.useState(false);
+export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleDialogProps) {
+  const [customerId, setCustomerId] = React.useState("");
+  const [saleType, setSaleType] = React.useState<"sale" | "exchange">("sale");
   const [items, setItems] = React.useState<SaleLineItem[]>([
     { id: '1', lpgSizeId: '', quantity: '1', unitPrice: '' }
   ]);
 
-  const { mutate: createSale, isPending } = useCreateSale();
-  const normalizedCustomerId = customerId === "walk-in" ? undefined : Number(customerId);
+  const { data: customers } = useCustomers();
+  const { mutate: updateSale, isPending } = useUpdateSale();
+
+  React.useEffect(() => {
+    if (open && sale) {
+      setCustomerId(sale.customer_id?.toString() || "none");
+      setSaleType(sale.type);
+      
+      // Initialize items from sale_items
+      if (sale.sales_items && sale.sales_items.length > 0) {
+        const newItems = sale.sales_items.map((item, idx) => ({
+          id: `item-${idx}`,
+          lpgSizeId: item.lpg_size_id.toString(),
+          quantity: item.quantity.toString(),
+          unitPrice: item.unit_price.toString()
+        }));
+        setItems(newItems);
+      }
+    }
+  }, [open, sale]);
 
   // Calculate total price
   const totalPrice = items.reduce((sum, item) => {
@@ -78,7 +95,7 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
     });
 
     // Fetch customer price when size changes
-    if (field === 'lpgSizeId' && customerId !== 'walk-in') {
+    if (field === 'lpgSizeId' && customerId !== 'none') {
       try {
         const customerPrice = await getCustomerLpgPrice(Number(customerId), Number(value));
         if (customerPrice) {
@@ -89,24 +106,13 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
       }
     }
 
-    // Set default price if no customer price
-    if (field === 'lpgSizeId' && customerId === 'walk-in') {
-      const size = (lpgSizes || initialLpgSizes || []).find(s => s.id.toString() === value);
-      if (size) {
-        updatedItems[updatedItems.findIndex(i => i.id === id)].unitPrice = size.price.toString();
-      }
-    }
-
     setItems(updatedItems);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate all items have required fields
-    if (items.some(item => !item.lpgSizeId || !item.quantity || !item.unitPrice)) {
-      return;
-    }
+    if (!sale || items.some(item => !item.lpgSizeId || !item.quantity || !item.unitPrice)) return;
 
     const saleItems = items.map(item => ({
       lpg_size_id: Number(item.lpgSizeId),
@@ -114,38 +120,32 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
       unit_price: Number(item.unitPrice)
     }));
 
-    createSale({
-      customer_id: normalizedCustomerId ?? null,
-      items: saleItems,
-      total_price: totalPrice,
-      type: type,
-      note: `Sale: ${type}`
-    }, {
-      onSuccess: () => {
-        setOpen(false);
-        setCustomerId("walk-in");
-        setType('sale');
-        setItems([
-          { id: '1', lpgSizeId: '', quantity: '1', unitPrice: '' }
-        ]);
+    updateSale(
+      {
+        id: sale.id,
+        saleData: {
+          customer_id: customerId !== "none" ? Number(customerId) : null,
+          items: saleItems,
+          total_price: totalPrice,
+          type: saleType,
+        },
+      },
+      {
+        onSuccess: () => {
+          onOpenChange(false);
+        },
       }
-    });
+    );
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2 h-9">
-          <ShoppingCart className="h-4 w-4" />
-          Record Sale
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="w-full max-w-5xl max-h-[95vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           <DialogHeader className="space-y-2">
-            <DialogTitle className="text-xl">Record New Sale</DialogTitle>
+            <DialogTitle className="text-xl">Edit Sale</DialogTitle>
             <DialogDescription className="text-sm">
-              Add products to create a sale transaction. Inventory will update automatically.
+              Modify products and sale details. Inventory changes will be reversed and reapplied.
             </DialogDescription>
           </DialogHeader>
 
@@ -158,11 +158,11 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
                 </Label>
                 <Select value={customerId} onValueChange={setCustomerId}>
                   <SelectTrigger id="customer" className="h-9 border-border/50">
-                    <SelectValue placeholder="Select customer" />
+                    <SelectValue placeholder="Walk-in" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="walk-in">Walk-in / Default Price</SelectItem>
-                    {(customers || []).map((customer) => (
+                    <SelectItem value="none">Walk-in (No Customer)</SelectItem>
+                    {customers?.map((customer) => (
                       <SelectItem key={customer.id} value={customer.id.toString()}>
                         {customer.name}
                       </SelectItem>
@@ -172,11 +172,11 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="type" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Label htmlFor="sale-type" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Sale Type
                 </Label>
-                <Select value={type} onValueChange={(v: any) => setType(v)}>
-                  <SelectTrigger id="type" className="h-9 border-border/50">
+                <Select value={saleType} onValueChange={(value: "sale" | "exchange") => setSaleType(value)}>
+                  <SelectTrigger id="sale-type" className="h-9 border-border/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -192,7 +192,7 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label className="text-sm font-semibold">Products</Label>
-                  <p className="text-xs text-muted-foreground">Add one or more items to this sale</p>
+                  <p className="text-xs text-muted-foreground">Manage items in this sale</p>
                 </div>
                 <Button
                   type="button"
@@ -220,7 +220,7 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(lpgSizes || initialLpgSizes || []).map((size) => (
+                          {lpgSizes?.map((size) => (
                             <SelectItem key={size.id} value={size.id.toString()}>
                               {size.name}
                             </SelectItem>
@@ -289,12 +289,12 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
           </div>
 
           <DialogFooter className="gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="h-9">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-9">
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending || items.some(i => !i.lpgSizeId || !i.unitPrice) || totalPrice === 0} className="h-9 gap-2">
+            <Button type="submit" disabled={isPending || items.some(i => !i.lpgSizeId || !i.quantity || !i.unitPrice) || totalPrice === 0} className="h-9 gap-2">
               {isPending && <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />}
-              {isPending ? "Processing..." : "Record Sale"}
+              {isPending ? "Updating..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>

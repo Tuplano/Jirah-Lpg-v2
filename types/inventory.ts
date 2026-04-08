@@ -77,17 +77,24 @@ export interface RefillProductSummary {
 
 export type SaleType = 'sale' | 'exchange';
 
+export interface SaleItem {
+  id: number;
+  sales_id: number;
+  lpg_size_id: number;
+  quantity: number;
+  unit_price: number;
+  created_at: string;
+  lpg_sizes?: LpgSize;
+}
+
 export interface Sale {
   id: number;
   customer_id?: number | null;
-  lpg_size_id: number;
-  quantity: number;
-  unit_price?: number;
   total_price: number;
   type: SaleType;
   created_at: string;
   customers?: Customer | null;
-  lpg_sizes?: LpgSize; // Joined data
+  sales_items?: SaleItem[];
 }
 
 export type TransactionType = 'sale' | 'refill_send' | 'refill_return' | 'return' | 'adjust';

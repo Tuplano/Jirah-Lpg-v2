@@ -182,6 +182,21 @@ export async function deleteRefill(id: number) {
   if (fetchBatchError) throw fetchBatchError;
   if (batch.status === "completed") throw new Error("Cannot delete completed refill batch");
 
+  // Log audit entry for delete
+  const itemsInfo = (batch.refill_batch_items || []).map((item: any) => `${item.quantity}x LPG#${item.lpg_size_id}`).join(", ");
+  const { error: auditError } = await supabase
+    .from("transactions")
+    .insert({
+      type: "adjust",
+      refill_batch_id: id,
+      quantity: 0,
+      note: `[DELETED] Refill Batch #${id}: ${itemsInfo} | Cost: ₱${batch.cost.toLocaleString()}`
+    });
+
+  if (auditError) throw auditError;
+
+  if (auditError) throw auditError;
+
   // Reverse the inventory changes made when sending for refill
   for (const item of batch.refill_batch_items || []) {
     const { data: currentInv, error: fetchInvError } = await supabase
@@ -299,6 +314,19 @@ export async function updateRefill(id: number, data: {
     .eq("id", id);
 
   if (batchError) throw batchError;
+
+  // Log audit entry for edit
+  const itemsInfo = data.items.map((item) => `${item.quantity}x LPG#${item.lpg_size_id}`).join(", ");
+  const { error: auditError } = await supabase
+    .from("transactions")
+    .insert({
+      type: "adjust",
+      refill_batch_id: id,
+      quantity: 0,
+      note: `[UPDATED] Refill Batch #${id}: ${itemsInfo} | New Cost: ₱${computedCost.toFixed(2)}`
+    });
+
+  if (auditError) throw auditError;
 
   // Delete old batch items
   const { error: itemsDeleteError } = await supabase

@@ -8,12 +8,18 @@ export async function getDashboardStats() {
   // 1. Total Sales Count & Value (Overall)
   const { data: salesData, error: salesError } = await supabase
     .from("sales")
-    .select("quantity, total_price");
+    .select("total_price");
 
   if (salesError) throw salesError;
 
-  const totalSalesQuantity = salesData.reduce((acc, curr) => acc + curr.quantity, 0);
-  const totalSalesRevenue = salesData.reduce((acc, curr) => acc + Number(curr.total_price), 0);
+  const { data: salesItemsData, error: itemsError } = await supabase
+    .from("sales_items")
+    .select("quantity");
+
+  if (itemsError) throw itemsError;
+
+  const totalSalesQuantity = (salesItemsData || []).reduce((acc: number, curr: any) => acc + curr.quantity, 0);
+  const totalSalesRevenue = (salesData || []).reduce((acc: number, curr: any) => acc + Number(curr.total_price), 0);
 
   // 2. Inventory Stats (Full Counts)
   const { data: invData, error: invError } = await supabase
@@ -22,22 +28,33 @@ export async function getDashboardStats() {
 
   if (invError) throw invError;
 
-  const totalFull = invData.reduce((acc, curr) => acc + curr.full_count, 0);
-  const totalEmpty = invData.reduce((acc, curr) => acc + curr.empty_count, 0);
-  const totalRefill = invData.reduce((acc, curr) => acc + curr.for_refill_count, 0);
+  const totalFull = (invData || []).reduce((acc: number, curr: any) => acc + curr.full_count, 0);
+  const totalEmpty = (invData || []).reduce((acc: number, curr: any) => acc + curr.empty_count, 0);
+  const totalRefill = (invData || []).reduce((acc: number, curr: any) => acc + curr.for_refill_count, 0);
 
   // 3. Today's Sales
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const { data: todaySales, error: todayError } = await supabase
+  const { data: todaySalesData, error: todayError } = await supabase
     .from("sales")
-    .select("quantity, total_price")
+    .select("total_price")
     .gte("created_at", today.toISOString());
 
   if (todayError) throw todayError;
 
-  const todaySalesCount = todaySales.reduce((acc, curr) => acc + curr.quantity, 0);
-  const todayRevenue = todaySales.reduce((acc, curr) => acc + Number(curr.total_price), 0);
+  const { data: todayItemsData, error: todayItemsError } = await supabase
+    .from("sales_items")
+    .select("sales_id, quantity")
+    .gte("created_at", today.toISOString());
+
+  if (todayItemsError) throw todayItemsError;
+
+  // Get today's sales IDs
+  const todaySalesIds = (todaySalesData || []).map((s: any) => s.id);
+  const todayItems = (todayItemsData || []).filter((item: any) => todaySalesIds.includes(item.sales_id));
+
+  const todaySalesCount = todayItems.reduce((acc: number, curr: any) => acc + curr.quantity, 0);
+  const todayRevenue = (todaySalesData || []).reduce((acc: number, curr: any) => acc + Number(curr.total_price), 0);
 
   return {
     totalSalesQuantity,

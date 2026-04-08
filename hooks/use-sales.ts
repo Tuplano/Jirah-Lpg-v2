@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAllSales, recordSale } from "@/services/sales-service";
+import { getAllSales, recordSale, updateSale, deleteSale } from "@/services/sales-service";
 import { getAllLpgSizes } from "@/services/lpg-size-service";
 import { toast } from "sonner";
 
@@ -50,5 +50,42 @@ export function useCreateSale() {
       if (context?.previousInventory) queryClient.setQueryData(["inventory"], context.previousInventory);
       toast.error("Failed to record sale.");
     },
+  });
+}
+
+export function useUpdateSale() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, saleData }: { id: number; saleData: any }) => {
+      return await updateSale(id, saleData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      toast.success("Sale updated successfully!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update sale");
+    }
+  });
+}
+
+export function useDeleteSale() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      return await deleteSale(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Sale deleted successfully!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete sale");
+    }
   });
 }
