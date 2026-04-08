@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { Sale, SaleItem, TransactionType } from "@/types/inventory";
+import { Sale, SaleItem, TransactionType } from "@/types";
 
 export async function getAllSales(): Promise<Sale[]> {
   const supabase = await createClient();

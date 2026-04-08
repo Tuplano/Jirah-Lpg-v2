@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { LpgSize } from "@/types/inventory";
+import { LpgSize } from "@/types";
 import { Pencil, Plus, Search } from "lucide-react";
 import {
   Dialog,

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Customer, CustomerLpgPrice, LpgSize } from "@/types/inventory";
+import { Customer, CustomerLpgPrice, LpgSize } from "@/types";
 import { Users, Search, Tags } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {

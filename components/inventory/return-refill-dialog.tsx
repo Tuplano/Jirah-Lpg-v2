@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRecordReturned } from "@/hooks/use-refills";
-import { RefillBatch } from "@/types/inventory";
+import { RefillBatch } from "@/types";
 
 interface ReturnRefillDialogProps {
   open: boolean;

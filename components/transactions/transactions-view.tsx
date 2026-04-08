@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, ArrowUpRight, ArrowDownLeft, RefreshCcw, ShoppingCart } from "lucide-react";
-import { Transaction, LpgSize } from "@/types/inventory";
+import { Transaction, LpgSize } from "@/types";
 import { RecordSaleDialog } from "../sales/record-sale-dialog";
 import { ManualAdjustmentDialog } from "./manual-adjustment-dialog";
 import { useTransactions } from "@/hooks/use-transactions";

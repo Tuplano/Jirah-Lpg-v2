@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { recordManualAdjustment } from "@/services/transactions-service";
 import { RefreshCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { LpgSize } from "@/types/inventory";
+import { LpgSize } from "@/types";
 
 interface ManualAdjustmentDialogProps {
   lpgSizes: LpgSize[];
@@ -62,7 +62,7 @@ export function ManualAdjustmentDialog({ lpgSizes }: ManualAdjustmentDialogProps
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2 h-9">
           <RefreshCcw className="h-4 w-4" />
           Manual Adjustment
         </Button>

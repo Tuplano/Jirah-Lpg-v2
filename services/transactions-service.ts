@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { Transaction } from "@/types/inventory";
+import { Transaction } from "@/types";
 
 export async function getAllTransactions(): Promise<Transaction[]> {
   const supabase = await createClient();

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LpgSize } from "@/types/inventory";
+import { LpgSize } from "@/types";
 import { useLpgSizes } from "@/hooks/use-settings";
 import { LpgSizesSection } from "@/components/settings/lpg-sizes-section";
 

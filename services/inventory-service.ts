@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { Inventory } from "@/types/inventory";
+import { Inventory } from "@/types";
 
 export async function getStockLevels(): Promise<Inventory[]> {
   const supabase = await createClient();

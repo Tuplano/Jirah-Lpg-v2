@@ -31,7 +31,7 @@ import { Button } from "@/components/ui/button";
 import { RecordSaleDialog } from "./record-sale-dialog";
 import { EditSaleDialog } from "./edit-sale-dialog";
 import { useLpgSizes, useSales, useDeleteSale } from "@/hooks/use-sales";
-import { LpgSize, Sale } from "@/types/inventory";
+import { LpgSize, Sale } from "@/types";
 
 
 interface SalesViewProps {

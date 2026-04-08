@@ -23,7 +23,7 @@ import {
 import { useInitializeInventory } from "@/hooks/use-inventory";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { LpgSize } from "@/types/inventory";
+import { LpgSize } from "@/types";
 
 interface AddSizeDialogProps {
   unmanagedSizes: LpgSize[];

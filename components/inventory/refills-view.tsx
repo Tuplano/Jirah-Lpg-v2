@@ -37,7 +37,7 @@ import { RecordRefillDialog } from "./record-refill-dialog";
 import { ReturnRefillDialog } from "./return-refill-dialog";
 import { EditRefillDialog } from "./edit-refill-dialog";
 import { cn } from "@/lib/utils";
-import { Inventory, LpgSize, RefillBatch, RefillProductSummary } from "@/types/inventory";
+import { Inventory, LpgSize, RefillBatch, RefillProductSummary } from "@/types";
 
 interface RefillsViewProps {
   initialRefills: RefillBatch[];

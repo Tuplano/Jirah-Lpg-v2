@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { RefillBatch, RefillBatchItem, RefillSendItem } from "@/types/inventory";
+import { RefillBatch, RefillBatchItem, RefillSendItem } from "@/types";
 
 export async function getAllRefills(): Promise<RefillBatch[]> {
   const supabase = await createClient();

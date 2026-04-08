@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useCreateSale, useLpgSizes } from "@/hooks/use-sales";
 import { useCustomers } from "@/hooks/use-customers";
 import { ShoppingCart, Plus, Trash2 } from "lucide-react";
-import { LpgSize } from "@/types/inventory";
+import { LpgSize } from "@/types";
 import { getCustomerLpgPrice } from "@/services/customer-service";
 
 interface RecordSaleDialogProps {
@@ -143,7 +143,7 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
       <DialogContent className="w-full max-w-5xl max-h-[95vh] overflow-y-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           <DialogHeader className="space-y-2">
-            <DialogTitle className="text-xl">Record New Sale</DialogTitle>
+            <DialogTitle className="text-xl">Record Sale</DialogTitle>
             <DialogDescription className="text-sm">
               Add products to create a sale transaction. Inventory will update automatically.
             </DialogDescription>

@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRecordSentBatch } from "@/hooks/use-refills";
 import { RefreshCcw, Plus, Trash2 } from "lucide-react";
-import { Inventory, LpgSize } from "@/types/inventory";
+import { Inventory, LpgSize } from "@/types";
 
 interface RecordRefillDialogProps {
   lpgSizes: LpgSize[];
@@ -147,7 +147,7 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2 h-9">
           <RefreshCcw className="h-4 w-4" />
           Record Refill
         </Button>

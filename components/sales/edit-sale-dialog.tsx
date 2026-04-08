@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUpdateSale } from "@/hooks/use-sales";
 import { useCustomers } from "@/hooks/use-customers";
-import { Sale, LpgSize } from "@/types/inventory";
+import { Sale, LpgSize } from "@/types";
 import { getCustomerLpgPrice } from "@/services/customer-service";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -140,7 +140,7 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[95vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-5xl max-h-[95vh] overflow-y-auto">
         <form onSubmit={handleSubmit} className="space-y-6">
           <DialogHeader className="space-y-2">
             <DialogTitle className="text-xl">Edit Sale</DialogTitle>

@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUpdateRefill } from "@/hooks/use-refills";
 import { Plus, Trash2 } from "lucide-react";
-import { Inventory, LpgSize, RefillBatch } from "@/types/inventory";
+import { Inventory, LpgSize, RefillBatch } from "@/types";
 
 interface EditRefillDialogProps {
   open: boolean;

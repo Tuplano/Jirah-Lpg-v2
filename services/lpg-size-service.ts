@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { LpgSize } from "@/types/inventory";
+import { LpgSize } from "@/types";
 
 function normalizeLpgSizeName(name: string): string {
   const trimmed = name.trim().replace(/\s+/g, " ");

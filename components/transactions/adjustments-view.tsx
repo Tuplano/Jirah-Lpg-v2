@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCcw } from "lucide-react";
-import { LpgSize } from "@/types/inventory";
+import { LpgSize } from "@/types";
 import { ManualAdjustmentDialog } from "./manual-adjustment-dialog";
 import { useAdjustments } from "@/hooks/use-transactions";
 
