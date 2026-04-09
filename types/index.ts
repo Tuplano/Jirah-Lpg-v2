@@ -7,3 +7,4 @@ export * from "./lpg-size";
 export * from "./refill";
 export * from "./sale";
 export * from "./transaction";
+export * from "./supplier";

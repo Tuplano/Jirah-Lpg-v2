@@ -7,6 +7,8 @@ import {
   ShoppingCart,
   Truck,
   Users,
+  Building2,
+  Inbox,
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -32,6 +34,7 @@ export const dashboardNavigation: NavigationGroup[] = [
     label: "Operations",
     items: [
       { title: "Sales", url: "/sales", icon: ShoppingCart },
+      { title: "Supplier Deliveries", url: "/supplier-deliveries", icon: Inbox },
       { title: "Refills", url: "/refills", icon: Truck },
       { title: "Adjustments", url: "/adjustments", icon: RefreshCcw },
     ],
@@ -40,6 +43,7 @@ export const dashboardNavigation: NavigationGroup[] = [
     label: "Management",
     items: [
       { title: "Customers", url: "/customers", icon: Users },
+      { title: "Suppliers", url: "/suppliers", icon: Building2 },
       { title: "Audit Log", url: "/transactions", icon: History },
     ],
   },

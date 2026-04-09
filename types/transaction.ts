@@ -1,6 +1,6 @@
 import { LpgSize } from "./lpg-size";
 
-export type TransactionType = 'sale' | 'refill_send' | 'refill_return' | 'return' | 'adjust' | 'delete' | 'create' | 'update';
+export type TransactionType = 'sale' | 'refill_send' | 'refill_return' | 'return' | 'adjust' | 'delete' | 'create' | 'update' | 'supplier_delivery';
 
 export interface Transaction {
   id: number;
