@@ -3,15 +3,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { RefillBatch, RefillBatchItem, RefillSendItem } from "@/types";
 
-export async function getAllRefills(): Promise<RefillBatch[]> {
+export async function getAllRefills(page: number = 1, pageSize: number = 10): Promise<{ data: RefillBatch[], count: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
     .from("refill_batches")
-    .select("*, refill_batch_items(*, lpg_sizes(*))")
-    .order("created_at", { ascending: false });
+    .select("*, refill_batch_items(*, lpg_sizes(*, suppliers(*)))", { count: 'exact' })
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) throw error;
-  return (data || []) as RefillBatch[];
+  return {
+    data: (data || []) as RefillBatch[],
+    count: count || 0
+  };
 }
 
 export async function recordSentBatch(data: {

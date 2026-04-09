@@ -26,6 +26,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Plus, X } from "lucide-react";
 
 import {
@@ -48,12 +58,15 @@ import { MoreHorizontal, Edit } from "lucide-react";
 
 interface CustomersViewProps {
   initialCustomers: Customer[];
+  initialCount: number;
   lpgSizes: LpgSize[];
   initialCustomerPrices: CustomerLpgPrice[];
 }
 
-export function CustomersView({ initialCustomers, lpgSizes, initialCustomerPrices }: CustomersViewProps) {
-  const { data: customers, isLoading } = useCustomers();
+export function CustomersView({ initialCustomers, initialCount, lpgSizes, initialCustomerPrices }: CustomersViewProps) {
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(10);
+  const { data: customersResponse, isLoading } = useCustomers(currentPage, pageSize);
   const { data: customerPrices } = useCustomerLpgPrices();
   const { mutate: deleteCustomer, isPending: isDeleting } = useDeleteCustomer();
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -61,9 +74,13 @@ export function CustomersView({ initialCustomers, lpgSizes, initialCustomerPrice
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
 
+  const customersData = customersResponse?.data || initialCustomers;
+  const totalCount = customersResponse?.count || initialCount;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
   const prices = customerPrices || initialCustomerPrices;
 
-  const filteredCustomers = (customers || initialCustomers).filter((c) =>
+  const filteredCustomers = customersData.filter((c: Customer) =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.contact.toLowerCase().includes(searchTerm.toLowerCase())
@@ -94,87 +111,129 @@ export function CustomersView({ initialCustomers, lpgSizes, initialCustomerPrice
       </div>
 
       {filteredCustomers.length > 0 ? (
-        <div className="border border-border/50 rounded-lg overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/50 bg-muted/30">
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Name</th>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground hidden sm:table-cell">Contact</th>
-                  <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground hidden md:table-cell">Address</th>
-                  <th className="px-4 py-3 text-right font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {filteredCustomers.map((customer) => {
-                  const customerCustomPrices = prices.filter((p) => p.customer_id === customer.id);
-                  
-                  return (
-                    <tr key={customer.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8 border border-border">
-                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
-                              {customer.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0">
-                            <p className="font-medium truncate">{customer.name}</p>
-                            <p className="text-xs text-muted-foreground sm:hidden">{customer.contact}</p>
+        <>
+          <div className="border border-border/50 rounded-lg overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/50 bg-muted/30">
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Name</th>
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground hidden sm:table-cell">Contact</th>
+                    <th className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground hidden md:table-cell">Address</th>
+                    <th className="px-4 py-3 text-right font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {filteredCustomers.map((customer: Customer) => {
+                    const customerCustomPrices = prices.filter((p) => p.customer_id === customer.id);
+                    
+                    return (
+                      <tr key={customer.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8 border border-border">
+                              <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                                {customer.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="font-medium truncate">{customer.name}</p>
+                              <p className="text-xs text-muted-foreground sm:hidden">{customer.contact}</p>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
-                        <a href={`tel:${customer.contact}`} className="hover:text-primary transition-colors">
-                          {customer.contact}
-                        </a>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                        <p className="truncate text-xs max-w-xs">{customer.address}</p>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedCustomer(customer);
-                                setEditDialogOpen(true);
-                              }}
-                              className="gap-2 cursor-pointer"
-                            >
-                              <Edit className="h-4 w-4 text-muted-foreground" />
-                              <span>Edit Details</span>
-                            </DropdownMenuItem>
-                            <ManageCustomerPricesDialog
-                              customer={customer}
-                              lpgSizes={lpgSizes}
-                              customerPrices={prices}
-                            />
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedCustomer(customer);
-                                setDeleteDialogOpen(true);
-                              }}
-                              className="text-destructive gap-2 cursor-pointer focus:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span>Delete Customer</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">
+                          <a href={`tel:${customer.contact}`} className="hover:text-primary transition-colors">
+                            {customer.contact}
+                          </a>
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                          <p className="truncate text-xs max-w-xs">{customer.address}</p>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedCustomer(customer);
+                                  setEditDialogOpen(true);
+                                }}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <Edit className="h-4 w-4 text-muted-foreground" />
+                                <span>Edit Details</span>
+                              </DropdownMenuItem>
+                              <ManageCustomerPricesDialog
+                                customer={customer}
+                                lpgSizes={lpgSizes}
+                                customerPrices={prices}
+                              />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedCustomer(customer);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive gap-2 cursor-pointer focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span>Delete Customer</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2 border-t border-border/25 mt-2">
+              <p className="text-xs text-muted-foreground order-2 sm:order-1">
+                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of <span className="font-medium">{totalCount}</span> results
+              </p>
+              <div className="order-1 sm:order-2">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        className={cn("cursor-pointer", currentPage === 1 && "pointer-events-none opacity-50")}
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page} className="hidden sm:inline-block">
+                        <PaginationLink
+                          className="cursor-pointer"
+                          isActive={page === currentPage}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+
+                    <PaginationItem>
+                      <PaginationNext 
+                        className={cn("cursor-pointer", currentPage === totalPages && "pointer-events-none opacity-50")}
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            </div>
+          )}
+        </>
       ) : (
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed border-border/50">
           <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center mb-3">

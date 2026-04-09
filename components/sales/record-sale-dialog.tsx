@@ -33,7 +33,7 @@ interface SaleLineItem {
 
 export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialogProps) {
   const { data: lpgSizes } = useLpgSizes();
-  const { data: customers } = useCustomers();
+  const { data: customersResponse } = useCustomers();
   const [customerId, setCustomerId] = React.useState<string>("walk-in");
   const [type, setType] = React.useState<'sale' | 'exchange'>('exchange');
   const [open, setOpen] = React.useState(false);
@@ -198,7 +198,7 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="walk-in">Walk-in / Default Price</SelectItem>
-                    {(customers || []).map((customer) => (
+                    {(customersResponse?.data || []).map((customer) => (
                       <SelectItem key={customer.id} value={customer.id.toString()}>
                         {customer.name}
                       </SelectItem>

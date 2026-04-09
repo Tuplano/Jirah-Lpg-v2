@@ -3,15 +3,16 @@ import { getAllSupplierDeliveries, getAllSuppliers } from "@/services/supplier-s
 import { getAllLpgSizes } from "@/services/lpg-size-service";
 
 export default async function SupplierDeliveriesPage() {
-  const [deliveries, suppliers, lpgSizes] = await Promise.all([
-    getAllSupplierDeliveries(),
+  const [deliveriesResponse, suppliers, lpgSizes] = await Promise.all([
+    getAllSupplierDeliveries(1, 10),
     getAllSuppliers(),
     getAllLpgSizes(),
   ]);
 
   return (
     <SupplierDeliveriesView
-      initialDeliveries={deliveries}
+      initialDeliveries={deliveriesResponse.data}
+      initialCount={deliveriesResponse.count}
       suppliers={suppliers}
       lpgSizes={lpgSizes}
     />

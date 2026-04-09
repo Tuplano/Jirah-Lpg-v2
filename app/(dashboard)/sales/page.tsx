@@ -3,10 +3,10 @@ import { getAllSales } from "@/services/sales-service";
 import { getAllLpgSizes } from "@/services/lpg-size-service";
 
 export default async function SalesPage() {
-  const [sales, lpgSizes] = await Promise.all([
-    getAllSales(),
+  const [salesResponse, lpgSizes] = await Promise.all([
+    getAllSales(1, 10),
     getAllLpgSizes()
   ]);
 
-  return <SalesView initialSales={sales} lpgSizes={lpgSizes} />;
+  return <SalesView initialSales={salesResponse.data} initialCount={salesResponse.count} lpgSizes={lpgSizes} />;
 }

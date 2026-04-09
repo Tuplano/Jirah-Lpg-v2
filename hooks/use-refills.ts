@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllRefills, recordReturned, recordSentBatch, deleteRefill, updateRefill } from "@/services/refill-service";
 import { toast } from "sonner";
 
-export function useRefills() {
+export function useRefills(page: number = 1, pageSize: number = 10) {
   return useQuery({
-    queryKey: ["refills"],
-    queryFn: async () => await getAllRefills(),
+    queryKey: ["refills", page, pageSize],
+    queryFn: async () => await getAllRefills(page, pageSize),
   });
 }
 

@@ -9,6 +9,16 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,15 +30,22 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface TransactionsViewProps {
-  initialTransactions: any[];
+  initialTransactions: Transaction[];
+  initialCount: number;
   lpgSizes: LpgSize[];
 }
 
-export function TransactionsView({ initialTransactions, lpgSizes }: TransactionsViewProps) {
-  const { data: transactions, isLoading } = useTransactions();
+export function TransactionsView({ initialTransactions, initialCount, lpgSizes }: TransactionsViewProps) {
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(10);
+  const { data: txResponse, isLoading } = useTransactions(currentPage, pageSize);
   const [searchTerm, setSearchTerm] = React.useState("");
 
-  const filteredTransactions = (transactions || initialTransactions).filter((tx) =>
+  const transactions = txResponse?.data || initialTransactions;
+  const totalCount = txResponse?.count || initialCount;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const filteredTransactions = transactions.filter((tx) =>
     tx.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tx.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tx.note?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -189,6 +206,46 @@ export function TransactionsView({ initialTransactions, lpgSizes }: Transactions
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2 border-t border-border/25 mt-2">
+          <p className="text-xs text-muted-foreground order-2 sm:order-1">
+            Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of <span className="font-medium">{totalCount}</span> results
+          </p>
+          <div className="order-1 sm:order-2">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    className={cn("cursor-pointer", currentPage === 1 && "pointer-events-none opacity-50")}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page} className="hidden sm:inline-block">
+                    <PaginationLink
+                      className="cursor-pointer"
+                      isActive={page === currentPage}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext 
+                    className={cn("cursor-pointer", currentPage === totalPages && "pointer-events-none opacity-50")}
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

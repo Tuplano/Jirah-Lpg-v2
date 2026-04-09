@@ -63,10 +63,10 @@ export function useDeleteSupplier() {
   });
 }
 
-export function useSupplierDeliveries() {
+export function useSupplierDeliveries(page: number = 1, pageSize: number = 10) {
   return useQuery({
-    queryKey: ["supplier-deliveries"],
-    queryFn: async () => await getAllSupplierDeliveries(),
+    queryKey: ["supplier-deliveries", page, pageSize],
+    queryFn: async () => await getAllSupplierDeliveries(page, pageSize),
   });
 }
 

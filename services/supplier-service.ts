@@ -86,15 +86,22 @@ export async function deleteSupplier(id: number): Promise<void> {
 // SUPPLIER DELIVERIES
 // ==========================================
 
-export async function getAllSupplierDeliveries(): Promise<SupplierDelivery[]> {
+export async function getAllSupplierDeliveries(page: number = 1, pageSize: number = 10): Promise<{ data: SupplierDelivery[], count: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
     .from("supplier_deliveries")
-    .select("*, suppliers(*), supplier_delivery_items(*, lpg_sizes(*))")
-    .order("delivery_date", { ascending: false });
+    .select("*, suppliers(*), supplier_delivery_items(*, lpg_sizes(*))", { count: 'exact' })
+    .order("delivery_date", { ascending: false })
+    .range(from, to);
 
   if (error) throw error;
-  return data || [];
+  return {
+    data: data || [],
+    count: count || 0
+  };
 }
 
 export async function recordSupplierDelivery(data: {

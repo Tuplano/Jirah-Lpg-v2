@@ -2,16 +2,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllTransactions, getAllAdjustments } from "@/services/transactions-service";
 import { toast } from "sonner";
 
-export function useTransactions() {
+export function useTransactions(page: number = 1, pageSize: number = 10) {
   return useQuery({
-    queryKey: ["transactions"],
-    queryFn: async () => await getAllTransactions(),
+    queryKey: ["transactions", page, pageSize],
+    queryFn: async () => await getAllTransactions(page, pageSize),
   });
 }
 
-export function useAdjustments() {
+export function useAdjustments(page: number = 1, pageSize: number = 10) {
   return useQuery({
-    queryKey: ["adjustments"],
-    queryFn: async () => await getAllAdjustments(),
+    queryKey: ["adjustments", page, pageSize],
+    queryFn: async () => await getAllAdjustments(page, pageSize),
   });
 }

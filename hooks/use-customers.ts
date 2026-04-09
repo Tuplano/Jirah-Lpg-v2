@@ -11,10 +11,10 @@ import {
 } from "@/services/customer-service";
 import { toast } from "sonner";
 
-export function useCustomers() {
+export function useCustomers(page: number = 1, pageSize: number = 100) {
   return useQuery({
-    queryKey: ["customers"],
-    queryFn: async () => await getAllCustomers(),
+    queryKey: ["customers", page, pageSize],
+    queryFn: async () => await getAllCustomers(page, pageSize),
   });
 }
 

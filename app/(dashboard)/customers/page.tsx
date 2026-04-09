@@ -3,15 +3,16 @@ import { getAllCustomers, getAllCustomerLpgPrices } from "@/services/customer-se
 import { getAllLpgSizes } from "@/services/lpg-size-service";
 
 export default async function CustomersPage() {
-  const [customers, lpgSizes, customerPrices] = await Promise.all([
-    getAllCustomers(),
+  const [customersResponse, lpgSizes, customerPrices] = await Promise.all([
+    getAllCustomers(1, 10),
     getAllLpgSizes(),
     getAllCustomerLpgPrices(),
   ]);
 
   return (
     <CustomersView
-      initialCustomers={customers}
+      initialCustomers={customersResponse.data}
+      initialCount={customersResponse.count}
       lpgSizes={lpgSizes}
       initialCustomerPrices={customerPrices}
     />

@@ -3,15 +3,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { Transaction } from "@/types";
 
-export async function getAllTransactions(): Promise<Transaction[]> {
+export async function getAllTransactions(page: number = 1, pageSize: number = 10): Promise<{ data: Transaction[], count: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
     .from("transactions")
-    .select("*, lpg_sizes(*)")
-    .order("created_at", { ascending: false });
+    .select("*, lpg_sizes(*, suppliers(*))", { count: 'exact' })
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) throw error;
-  return data || [];
+  return {
+    data: data || [],
+    count: count || 0
+  };
 }
 
 export async function recordManualAdjustment(data: {
@@ -65,16 +72,23 @@ export async function recordManualAdjustment(data: {
   return tx;
 }
 
-export async function getAllAdjustments(): Promise<Transaction[]> {
+export async function getAllAdjustments(page: number = 1, pageSize: number = 10): Promise<{ data: Transaction[], count: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
     .from("transactions")
-    .select("*, lpg_sizes(*)")
+    .select("*, lpg_sizes(*, suppliers(*))", { count: 'exact' })
     .eq("type", "adjust")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) throw error;
-  return data || [];
+  return {
+    data: data || [],
+    count: count || 0
+  };
 }
 
 

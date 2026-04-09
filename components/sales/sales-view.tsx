@@ -9,6 +9,16 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
 import { 
   DropdownMenu,
@@ -35,12 +45,15 @@ import { LpgSize, Sale } from "@/types";
 
 
 interface SalesViewProps {
-  initialSales: any[];
+  initialSales: Sale[];
+  initialCount: number;
   lpgSizes?: LpgSize[];
 }
 
-export function SalesView({ initialSales, lpgSizes: initialLpgSizes }: SalesViewProps) {
-  const { data: sales, isLoading } = useSales();
+export function SalesView({ initialSales, initialCount, lpgSizes: initialLpgSizes }: SalesViewProps) {
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(10);
+  const { data: salesResponse, isLoading } = useSales(currentPage, pageSize);
   const { data: lpgSizes } = useLpgSizes();
   const { mutate: deleteSale, isPending: isDeleting } = useDeleteSale();
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -48,7 +61,11 @@ export function SalesView({ initialSales, lpgSizes: initialLpgSizes }: SalesView
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [selectedSale, setSelectedSale] = React.useState<Sale | null>(null);
 
-  const filteredSales = (sales || initialSales).filter((sale) => {
+  const sales = salesResponse?.data || initialSales;
+  const totalCount = salesResponse?.count || initialCount;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const filteredSales = sales.filter((sale) => {
     const productNames = sale.sales_items?.map((item: any) => item.lpg_sizes?.name).filter(Boolean).join(", ").toLowerCase() || "";
     const customerName = sale.customers?.name.toLowerCase() || "";
     return productNames.includes(searchTerm.toLowerCase()) || customerName.includes(searchTerm.toLowerCase());
@@ -58,9 +75,11 @@ export function SalesView({ initialSales, lpgSizes: initialLpgSizes }: SalesView
     return <div className="p-8 text-center text-muted-foreground">Loading sales history...</div>;
   }
 
-  // Calculate stats
-  const totalRevenue = (sales || initialSales).reduce((sum: number, sale: any) => sum + Number(sale.total_price || 0), 0);
-  const totalItems = (sales || initialSales).reduce((sum: number, sale: any) => {
+  // Calculate stats - Note: In a real production app, these should ideally be fetched from a dashboard/stat service 
+  // that provides totals for the entire collection, not just the current page.
+  // For now, we'll keep it as-is (stats for current page) but ideally it should be global.
+  const totalRevenue = sales.reduce((sum: number, sale: any) => sum + Number(sale.total_price || 0), 0);
+  const totalItems = sales.reduce((sum: number, sale: any) => {
     return sum + (sale.sales_items?.reduce((s: number, item: any) => s + item.quantity, 0) || 0);
   }, 0);
 
@@ -126,93 +145,137 @@ export function SalesView({ initialSales, lpgSizes: initialLpgSizes }: SalesView
         />
       </div>
 
-      {/* Table */}
-      <div className="rounded-lg border border-border/50 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-b border-border/50 bg-muted/30 hover:bg-muted/30">
-                <TableHead className="font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Date & Time</TableHead>
-                <TableHead className="font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Products</TableHead>
-                <TableHead className="font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Customer</TableHead>
-                <TableHead className="text-center font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Qty</TableHead>
-                <TableHead className="text-right font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Total</TableHead>
-                <TableHead className="text-right font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-border/50">
-              {filteredSales.length > 0 ? (
-                filteredSales.map((sale) => {
-                  const productNames = sale.sales_items?.map((item: any) => item.lpg_sizes?.name).filter(Boolean).join(", ") || "—";
-                  const totalItems = sale.sales_items?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0;
-                  
-                  return (
-                    <TableRow key={sale.id} className="border-border/50 hover:bg-muted/20 transition-colors">
-                      <TableCell className="text-sm">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-medium">{new Date(sale.created_at).toLocaleDateString()}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(sale.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm font-medium max-w-xs truncate">
-                        {productNames}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {sale.customers?.name || <span className="text-muted-foreground/60">Walk-in</span>}
-                      </TableCell>
-                      <TableCell className="text-center text-sm font-semibold">
-                        {totalItems}
-                      </TableCell>
-                      <TableCell className="text-right text-sm font-semibold text-primary">
-                        ₱{sale.total_price.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedSale(sale);
-                                setEditDialogOpen(true);
-                              }}
-                              className="gap-2 cursor-pointer"
-                            >
-                              <Edit className="h-4 w-4" />
-                              <span>Edit Sale</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedSale(sale);
-                                setDeleteDialogOpen(true);
-                              }}
-                              className="text-destructive gap-2 cursor-pointer focus:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span>Delete Sale</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground text-sm">
-                    No sales found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+      {/* Main Content */}
+       {filteredSales.length > 0 ? (
+        <>
+          <div className="rounded-lg border border-border/50 overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b border-border/50 bg-muted/30 hover:bg-muted/30">
+                    <TableHead className="font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Date & Time</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Products</TableHead>
+                    <TableHead className="font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Customer</TableHead>
+                    <TableHead className="text-center font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Qty</TableHead>
+                    <TableHead className="text-right font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Total</TableHead>
+                    <TableHead className="text-right font-semibold text-xs uppercase tracking-[0.08em] text-muted-foreground">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-border/50">
+                  {filteredSales.map((sale) => {
+                    const productNames = sale.sales_items?.map((item: any) => item.lpg_sizes?.name).filter(Boolean).join(", ") || "—";
+                    const totalItems = sale.sales_items?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0;
+                    
+                    return (
+                      <TableRow key={sale.id} className="border-border/50 hover:bg-muted/20 transition-colors">
+                        <TableCell className="text-sm">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-medium">{new Date(sale.created_at).toLocaleDateString()}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(sale.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm font-medium max-w-xs truncate">
+                          {productNames}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {sale.customers?.name || <span className="text-muted-foreground/60">Walk-in</span>}
+                        </TableCell>
+                        <TableCell className="text-center text-sm font-semibold">
+                          {totalItems}
+                        </TableCell>
+                        <TableCell className="text-right text-sm font-semibold text-primary">
+                          ₱{sale.total_price.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-muted">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedSale(sale);
+                                  setEditDialogOpen(true);
+                                }}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <Edit className="h-4 w-4" />
+                                <span>Edit Sale</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedSale(sale);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive gap-2 cursor-pointer focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span>Delete Sale</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2 border-t border-border/25 mt-2">
+              <p className="text-xs text-muted-foreground order-2 sm:order-1">
+                Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of <span className="font-medium">{totalCount}</span> results
+              </p>
+              <div className="order-1 sm:order-2">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        className={cn("cursor-pointer", currentPage === 1 && "pointer-events-none opacity-50")}
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page} className="hidden sm:inline-block">
+                        <PaginationLink
+                          className="cursor-pointer"
+                          isActive={page === currentPage}
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+
+                    <PaginationItem>
+                      <PaginationNext 
+                        className={cn("cursor-pointer", currentPage === totalPages && "pointer-events-none opacity-50")}
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed border-border/50">
+          <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center mb-3">
+             <Search className="h-6 w-6 text-muted-foreground/60" />
+          </div>
+          <h3 className="text-sm font-medium">No sales found</h3>
+          <p className="text-xs text-muted-foreground mt-1">Try adjusting your search or record a new sale.</p>
         </div>
-      </div>
+      )}
 
       <EditSaleDialog
         open={editDialogOpen}

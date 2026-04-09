@@ -9,6 +9,15 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,12 +50,15 @@ import { Inventory, LpgSize, RefillBatch, RefillProductSummary } from "@/types";
 
 interface RefillsViewProps {
   initialRefills: RefillBatch[];
+  initialCount: number;
   lpgSizes: LpgSize[];
   initialInventory: Inventory[];
 }
 
-export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initialInventory }: RefillsViewProps) {
-  const { data: refills, isLoading } = useRefills();
+export function RefillsView({ initialRefills, initialCount, lpgSizes: initialLpgSizes, initialInventory }: RefillsViewProps) {
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(10);
+  const { data: refillsResponse, isLoading } = useRefills(currentPage, pageSize);
   const { data: lpgSizes } = useLpgSizes();
   const { data: inventory } = useInventory();
   const { mutate: deleteRefill, isPending: isDeleting } = useDeleteRefill();
@@ -56,7 +68,10 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
   const [selectedRefill, setSelectedRefill] = React.useState<RefillBatch | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [refillToDelete, setRefillToDelete] = React.useState<RefillBatch | null>(null);
-  const refillBatches = (refills || initialRefills) as RefillBatch[];
+
+  const refillBatches = (refillsResponse?.data || initialRefills) as RefillBatch[];
+  const totalCount = refillsResponse?.count || initialCount;
+  const totalPages = Math.ceil(totalCount / pageSize);
   const summarizedRefills: RefillProductSummary[] = refillBatches.map((batch) => {
     const items = batch.refill_batch_items || [];
     const names = items.map((item) => {
@@ -237,6 +252,46 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2 border-t border-border/25 mt-2">
+          <p className="text-xs text-muted-foreground order-2 sm:order-1">
+            Showing <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> to <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> of <span className="font-medium">{totalCount}</span> results
+          </p>
+          <div className="order-1 sm:order-2">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    className={cn("cursor-pointer", currentPage === 1 && "pointer-events-none opacity-50")}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page} className="hidden sm:inline-block">
+                    <PaginationLink
+                      className="cursor-pointer"
+                      isActive={page === currentPage}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext 
+                    className={cn("cursor-pointer", currentPage === totalPages && "pointer-events-none opacity-50")}
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </div>
+      )}
 
       <ReturnRefillDialog
         open={returnDialogOpen}

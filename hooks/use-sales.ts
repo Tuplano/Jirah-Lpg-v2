@@ -3,10 +3,10 @@ import { getAllSales, recordSale, updateSale, deleteSale } from "@/services/sale
 import { getAllLpgSizes } from "@/services/lpg-size-service";
 import { toast } from "sonner";
 
-export function useSales() {
+export function useSales(page: number = 1, pageSize: number = 10) {
   return useQuery({
-    queryKey: ["sales"],
-    queryFn: async () => await getAllSales(),
+    queryKey: ["sales", page, pageSize],
+    queryFn: async () => await getAllSales(page, pageSize),
   });
 }
 

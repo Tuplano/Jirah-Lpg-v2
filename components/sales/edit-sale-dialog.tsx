@@ -40,7 +40,7 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
     { id: '1', lpgSizeId: '', quantity: '1', unitPrice: '' }
   ]);
 
-  const { data: customers } = useCustomers();
+  const { data: customersResponse } = useCustomers();
   const { mutate: updateSale, isPending } = useUpdateSale();
 
   React.useEffect(() => {
@@ -202,7 +202,7 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Walk-in (No Customer)</SelectItem>
-                    {customers?.map((customer) => (
+                    {customersResponse?.data.map((customer) => (
                       <SelectItem key={customer.id} value={customer.id.toString()}>
                         {customer.name}
                       </SelectItem>

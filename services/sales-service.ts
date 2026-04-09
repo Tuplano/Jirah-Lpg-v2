@@ -3,15 +3,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { Sale, SaleItem, TransactionType } from "@/types";
 
-export async function getAllSales(): Promise<Sale[]> {
+export async function getAllSales(page: number = 1, pageSize: number = 10): Promise<{ data: Sale[], count: number }> {
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await supabase
     .from("sales")
-    .select("*, customers(*), sales_items(*, lpg_sizes(*))")
-    .order("created_at", { ascending: false });
+    .select("*, customers(*), sales_items(*, lpg_sizes(*, suppliers(*)))", { count: 'exact' })
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) throw error;
-  return data || [];
+  return { 
+    data: data || [], 
+    count: count || 0 
+  };
 }
 
 export async function recordSale(data: {
