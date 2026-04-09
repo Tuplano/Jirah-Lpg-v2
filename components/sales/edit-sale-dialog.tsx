@@ -61,6 +61,46 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
     }
   }, [open, sale]);
 
+  // Auto-refresh prices when customer changes
+  React.useEffect(() => {
+    const refreshPrices = async () => {
+      const updatedItems = await Promise.all(items.map(async (item) => {
+        if (!item.lpgSizeId) return item;
+        
+        let newPrice = item.unitPrice;
+        
+        if (customerId !== 'none') {
+          try {
+            const customerPrice = await getCustomerLpgPrice(Number(customerId), Number(item.lpgSizeId));
+            if (customerPrice) {
+              newPrice = customerPrice.price.toString();
+            } else {
+              // Fallback to standard price if no custom price
+              const size = (lpgSizes || []).find(s => s.id.toString() === item.lpgSizeId);
+              if (size) newPrice = size.price.toString();
+            }
+          } catch (error) {
+            console.error("Failed to fetch customer price:", error);
+          }
+        } else {
+          // Fallback to standard price for walk-in
+          const size = (lpgSizes || []).find(s => s.id.toString() === item.lpgSizeId);
+          if (size) newPrice = size.price.toString();
+        }
+        
+        return { ...item, unitPrice: newPrice };
+      }));
+      
+      setItems(updatedItems);
+    };
+
+    // Only refresh if the customer was changed AFTER initial load
+    // To avoid overwriting existing sale item prices on first open
+    if (open && customerId !== (sale?.customer_id?.toString() || "none")) {
+        refreshPrices();
+    }
+  }, [customerId, open]);
+
   // Calculate total price
   const totalPrice = items.reduce((sum, item) => {
     const qty = Number(item.quantity) || 0;

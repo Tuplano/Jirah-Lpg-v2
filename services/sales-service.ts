@@ -84,8 +84,12 @@ export async function recordSale(data: {
       .from("transactions")
       .insert({
         type: 'sale',
+        reference_table: 'sales',
+        reference_id: sale.id,
         lpg_size_id: item.lpg_size_id,
         quantity: item.quantity,
+        old_quantity: currentInv.full_count,
+        new_quantity: updates.full_count,
         note: data.note || `Sale: ${data.type}${data.customer_id ? ` for customer ${data.customer_id}` : ""}`
       });
 
@@ -207,7 +211,9 @@ export async function updateSale(id: number, data: {
   const { error: auditError } = await supabase
     .from("transactions")
     .insert({
-      type: "adjust",
+      type: "update",
+      reference_table: 'sales',
+      reference_id: id,
       lpg_size_id: null,
       quantity: 0,
       note: `[UPDATED] Sale #${id}: ${(originalSale.sales_items || []).length} → ${data.items.length} items | New Total: ₱${data.total_price.toLocaleString()}`
@@ -260,7 +266,9 @@ export async function deleteSale(id: number) {
   const { error: auditError } = await supabase
     .from("transactions")
     .insert({
-      type: "adjust",
+      type: "delete",
+      reference_table: 'sales',
+      reference_id: id,
       lpg_size_id: null,
       quantity: 0,
       note: `[DELETED] Sale #${id}: ${(sale.sales_items || []).length} items | Original Total: ₱${sale.total_price.toLocaleString()}`

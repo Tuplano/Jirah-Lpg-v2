@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, ArrowUpRight, ArrowDownLeft, RefreshCcw, ShoppingCart } from "lucide-react";
+import { Search, Filter, ArrowUpRight, ArrowDownLeft, RefreshCcw, ShoppingCart, Trash2, Pencil, Plus } from "lucide-react";
 import { Transaction, LpgSize } from "@/types";
 import { RecordSaleDialog } from "../sales/record-sale-dialog";
 import { ManualAdjustmentDialog } from "./manual-adjustment-dialog";
@@ -72,6 +72,33 @@ export function TransactionsView({ initialTransactions, lpgSizes }: Transactions
             <span className="text-sm font-medium">Adjustment</span>
           </div>
         );
+      case 'delete':
+        return (
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded bg-destructive/10 flex items-center justify-center text-destructive">
+              <Trash2 className="h-3 w-3" />
+            </div>
+            <span className="text-sm font-medium">Deleted</span>
+          </div>
+        );
+      case 'create':
+        return (
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center text-primary">
+              <Plus className="h-3 w-3" />
+            </div>
+            <span className="text-sm font-medium">Created</span>
+          </div>
+        );
+      case 'update':
+        return (
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded bg-secondary/30 flex items-center justify-center text-secondary-foreground">
+              <Pencil className="h-3 w-3" />
+            </div>
+            <span className="text-sm font-medium">Updated</span>
+          </div>
+        );
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -107,7 +134,8 @@ export function TransactionsView({ initialTransactions, lpgSizes }: Transactions
               <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Type</TableHead>
               <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Date & Time</TableHead>
               <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Item</TableHead>
-              <TableHead className="text-center font-semibold text-xs uppercase tracking-[0.08em]">Qty</TableHead>
+              <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Ref</TableHead>
+              <TableHead className="text-center font-semibold text-xs uppercase tracking-[0.08em]">Qty Change</TableHead>
               <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Note</TableHead>
             </TableRow>
           </TableHeader>
@@ -125,10 +153,26 @@ export function TransactionsView({ initialTransactions, lpgSizes }: Transactions
                     </div>
                   </TableCell>
                   <TableCell className="font-medium text-sm">
-                    {tx.lpg_sizes?.name}
+                    {tx.lpg_sizes?.name || '—'}
                   </TableCell>
-                  <TableCell className="text-center font-semibold text-sm">
-                    {tx.quantity}
+                  <TableCell className="text-xs font-mono text-muted-foreground">
+                    {tx.reference_table ? (
+                      <span className="bg-muted px-1.5 py-0.5 rounded border border-border/50">
+                        {tx.reference_table.slice(0, 1).toUpperCase()}{tx.reference_id}
+                      </span>
+                    ) : '—'}
+                  </TableCell>
+                  <TableCell className="text-center text-sm">
+                    <div className="flex flex-col items-center">
+                      <span className={`font-semibold ${tx.quantity > 0 ? 'text-primary' : tx.quantity < 0 ? 'text-destructive' : ''}`}>
+                        {tx.quantity > 0 ? `+${tx.quantity}` : tx.quantity}
+                      </span>
+                      {tx.old_quantity !== null && tx.new_quantity !== null && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {tx.old_quantity} → {tx.new_quantity}
+                        </span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm max-w-xs truncate">
                     {tx.note || '-'}
@@ -137,7 +181,7 @@ export function TransactionsView({ initialTransactions, lpgSizes }: Transactions
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-muted-foreground text-sm">
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground text-sm">
                   No transaction history found.
                 </TableCell>
               </TableRow>

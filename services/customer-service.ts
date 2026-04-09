@@ -23,6 +23,18 @@ export async function createCustomer(data: Omit<Customer, 'id'>) {
     .single();
 
   if (error) throw error;
+
+  // Log transaction
+  await supabase
+    .from("transactions")
+    .insert({
+      type: 'create',
+      reference_table: 'customers',
+      reference_id: customer.id,
+      quantity: 0,
+      note: `[CREATE] New Customer: ${data.name}`
+    });
+
   return customer;
 }
 
@@ -76,6 +88,18 @@ export async function updateCustomer(id: number, data: Partial<Customer>): Promi
     .single();
 
   if (error) throw error;
+
+  // Log transaction
+  await supabase
+    .from("transactions")
+    .insert({
+      type: 'update',
+      reference_table: 'customers',
+      reference_id: id,
+      quantity: 0,
+      note: `[UPDATE] Customer #${id} (${customer.name}) updated.`
+    });
+
   return customer;
 }
 
@@ -87,4 +111,15 @@ export async function deleteCustomer(id: number): Promise<void> {
     .eq("id", id);
 
   if (error) throw error;
+
+  // Log transaction
+  await supabase
+    .from("transactions")
+    .insert({
+      type: 'delete',
+      reference_table: 'customers',
+      reference_id: id,
+      quantity: 0,
+      note: `[DELETE] Customer #${id} removed.`
+    });
 }

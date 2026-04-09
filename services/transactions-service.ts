@@ -22,21 +22,7 @@ export async function recordManualAdjustment(data: {
 }) {
   const supabase = await createClient();
 
-  // 1. Record Transaction
-  const { data: tx, error: txError } = await supabase
-    .from("transactions")
-    .insert({
-      type: 'adjust',
-      lpg_size_id: data.lpg_size_id,
-      quantity: data.quantity,
-      note: `[Adjust ${data.target_column}] ${data.note}`
-    })
-    .select()
-    .single();
-
-  if (txError) throw txError;
-
-  // 2. Fetch current inventory stock for that size
+  // 1. Fetch current inventory stock for that size
   const { data: currentInv, error: fetchError } = await supabase
     .from("inventory")
     .select("*")
@@ -45,15 +31,34 @@ export async function recordManualAdjustment(data: {
 
   if (fetchError) throw fetchError;
 
+  const oldQuantity = currentInv[data.target_column] || 0;
+  const newCount = Math.max(0, oldQuantity + data.quantity);
+
+  // 2. Record Transaction
+  const { data: tx, error: txError } = await supabase
+    .from("transactions")
+    .insert({
+      type: 'adjust',
+      reference_table: 'inventory',
+      reference_id: currentInv.id,
+      lpg_size_id: data.lpg_size_id,
+      quantity: data.quantity,
+      old_quantity: oldQuantity,
+      new_quantity: newCount,
+      note: `[Adjust ${data.target_column}] ${data.note}`
+    })
+    .select()
+    .single();
+
+  if (txError) throw txError;
+
   // 3. Update Inventory
-  const newCount = Math.max(0, (currentInv[data.target_column] || 0) + data.quantity);
-  
   const { error: invError } = await supabase
     .from("inventory")
     .update({
       [data.target_column]: newCount
     })
-    .eq("lpg_size_id", data.lpg_size_id);
+    .eq("id", currentInv.id);
 
   if (invError) throw invError;
 

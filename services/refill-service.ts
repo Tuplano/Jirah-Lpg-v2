@@ -82,23 +82,30 @@ export async function recordSentBatch(data: {
       );
     }
 
+    const updates = {
+      empty_count: Math.max(0, currentInv.empty_count - item.quantity),
+      for_refill_count: currentInv.for_refill_count + item.quantity,
+    };
+
     const { error: txError } = await supabase
       .from("transactions")
       .insert({
         type: "refill_send",
+        reference_table: 'refill_batches',
+        reference_id: batch.id,
         lpg_size_id: item.lpg_size_id,
         refill_batch_id: batch.id,
         quantity: item.quantity,
+        old_quantity: currentInv.empty_count,
+        new_quantity: updates.empty_count,
         note: data.note || `Sent for Refill: ${item.quantity} units`,
       });
 
     if (txError) throw txError;
+
     const { error: invError } = await supabase
       .from("inventory")
-      .update({
-        empty_count: Math.max(0, currentInv.empty_count - item.quantity),
-        for_refill_count: currentInv.for_refill_count + item.quantity,
-      })
+      .update(updates)
       .eq("lpg_size_id", item.lpg_size_id);
 
     if (invError) throw invError;
@@ -136,18 +143,6 @@ export async function recordReturned(id: number, dateReturned: string) {
   if (updateBatchError) throw updateBatchError;
 
   for (const item of batch.refill_batch_items || []) {
-    const { error: txError } = await supabase
-      .from("transactions")
-      .insert({
-        type: "refill_return",
-        lpg_size_id: item.lpg_size_id,
-        refill_batch_id: batch.id,
-        quantity: item.quantity,
-        note: `Returned from Refill: ${item.quantity} units`,
-      });
-
-    if (txError) throw txError;
-
     const { data: currentInv, error: fetchInvError } = await supabase
       .from("inventory")
       .select("*")
@@ -156,12 +151,30 @@ export async function recordReturned(id: number, dateReturned: string) {
 
     if (fetchInvError) throw fetchInvError;
 
+    const updates = {
+      for_refill_count: Math.max(0, currentInv.for_refill_count - item.quantity),
+      full_count: currentInv.full_count + item.quantity,
+    };
+
+    const { error: txError } = await supabase
+      .from("transactions")
+      .insert({
+        type: "refill_return",
+        reference_table: 'refill_batches',
+        reference_id: batch.id,
+        lpg_size_id: item.lpg_size_id,
+        refill_batch_id: batch.id,
+        quantity: item.quantity,
+        old_quantity: currentInv.for_refill_count,
+        new_quantity: updates.for_refill_count,
+        note: `Returned from Refill: ${item.quantity} units`,
+      });
+
+    if (txError) throw txError;
+
     const { error: invError } = await supabase
       .from("inventory")
-      .update({
-        for_refill_count: Math.max(0, currentInv.for_refill_count - item.quantity),
-        full_count: currentInv.full_count + item.quantity,
-      })
+      .update(updates)
       .eq("lpg_size_id", item.lpg_size_id);
 
     if (invError) throw invError;
@@ -187,8 +200,10 @@ export async function deleteRefill(id: number) {
   const { error: auditError } = await supabase
     .from("transactions")
     .insert({
-      type: "adjust",
-      refill_batch_id: id,
+      type: "delete",
+      reference_table: 'refill_batches',
+      reference_id: id,
+      lpg_size_id: null,
       quantity: 0,
       note: `[DELETED] Refill Batch #${id}: ${itemsInfo} | Cost: ₱${batch.cost.toLocaleString()}`
     });
@@ -320,8 +335,10 @@ export async function updateRefill(id: number, data: {
   const { error: auditError } = await supabase
     .from("transactions")
     .insert({
-      type: "adjust",
-      refill_batch_id: id,
+      type: "update",
+      reference_table: 'refill_batches',
+      reference_id: id,
+      lpg_size_id: null,
       quantity: 0,
       note: `[UPDATED] Refill Batch #${id}: ${itemsInfo} | New Cost: ₱${computedCost.toFixed(2)}`
     });

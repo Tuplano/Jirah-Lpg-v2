@@ -35,7 +35,7 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
   const { data: lpgSizes } = useLpgSizes();
   const { data: customers } = useCustomers();
   const [customerId, setCustomerId] = React.useState<string>("walk-in");
-  const [type, setType] = React.useState<'sale' | 'exchange'>('sale');
+  const [type, setType] = React.useState<'sale' | 'exchange'>('exchange');
   const [open, setOpen] = React.useState(false);
   const [items, setItems] = React.useState<SaleLineItem[]>([
     { id: '1', lpgSizeId: '', quantity: '1', unitPrice: '' }
@@ -43,6 +43,42 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
 
   const { mutate: createSale, isPending } = useCreateSale();
   const normalizedCustomerId = customerId === "walk-in" ? undefined : Number(customerId);
+
+  // Auto-refresh prices when customer changes
+  React.useEffect(() => {
+    const refreshPrices = async () => {
+      const updatedItems = await Promise.all(items.map(async (item) => {
+        if (!item.lpgSizeId) return item;
+        
+        let newPrice = item.unitPrice;
+        
+        if (customerId !== 'walk-in') {
+          try {
+            const customerPrice = await getCustomerLpgPrice(Number(customerId), Number(item.lpgSizeId));
+            if (customerPrice) {
+              newPrice = customerPrice.price.toString();
+            } else {
+              // Fallback to standard price if no custom price
+              const size = (lpgSizes || initialLpgSizes || []).find(s => s.id.toString() === item.lpgSizeId);
+              if (size) newPrice = size.price.toString();
+            }
+          } catch (error) {
+            console.error("Failed to fetch customer price:", error);
+          }
+        } else {
+          // Fallback to standard price for walk-in
+          const size = (lpgSizes || initialLpgSizes || []).find(s => s.id.toString() === item.lpgSizeId);
+          if (size) newPrice = size.price.toString();
+        }
+        
+        return { ...item, unitPrice: newPrice };
+      }));
+      
+      setItems(updatedItems);
+    };
+
+    if (open) refreshPrices();
+  }, [customerId, open]);
 
   // Calculate total price
   const totalPrice = items.reduce((sum, item) => {
