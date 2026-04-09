@@ -16,9 +16,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useCustomerLpgPrices, useCustomers, useUpsertCustomerLpgPrice, useDeleteCustomer } from "@/hooks/use-customers";
+import { useCustomerLpgPrices, useCustomers, useUpsertCustomerLpgPrice, useDeleteCustomer, useDeleteCustomerLpgPrice } from "@/hooks/use-customers";
 import { AddCustomerDialog } from "./add-customer-dialog";
 import { EditCustomerDialog } from "./edit-customer-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, X } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -229,50 +237,106 @@ function ManageCustomerPricesDialog({
   customerPrices: CustomerLpgPrice[];
 }) {
   const [open, setOpen] = React.useState(false);
+  
+  // Track which sizes have custom pricing managed
+  const [selectedSizeIds, setSelectedSizeIds] = React.useState<number[]>([]);
   const [draftPrices, setDraftPrices] = React.useState<Record<number, string>>({});
-  const { mutateAsync: saveCustomerPrice, isPending } = useUpsertCustomerLpgPrice();
+  const [sizeToAdd, setSizeToAdd] = React.useState<string>("");
+  
+  const { mutateAsync: saveCustomerPrice, isPending: isSaving } = useUpsertCustomerLpgPrice();
+  const { mutateAsync: deleteCustomerPrice, isPending: isDeleting } = useDeleteCustomerLpgPrice();
+
+  const isPending = isSaving || isDeleting;
 
   React.useEffect(() => {
     if (!open) {
+      setSizeToAdd("");
       return;
     }
 
+    const sizesWithPrices = lpgSizes.filter(size => 
+      customerPrices.some(p => p.customer_id === customer.id && p.lpg_size_id === size.id)
+    );
+
+    setSelectedSizeIds(sizesWithPrices.map(s => s.id));
+
     const nextDrafts = Object.fromEntries(
-      lpgSizes.map((size) => {
+      sizesWithPrices.map((size) => {
         const existing = customerPrices.find(
           (price) => price.customer_id === customer.id && price.lpg_size_id === size.id
         );
-
         return [size.id, existing ? existing.price.toString() : ""];
       })
     );
-
     setDraftPrices(nextDrafts);
   }, [open, customer.id, customerPrices, lpgSizes]);
+
+  const handleAddSize = () => {
+    if (!sizeToAdd) return;
+    const sizeId = parseInt(sizeToAdd, 10);
+    if (!selectedSizeIds.includes(sizeId)) {
+      setSelectedSizeIds((current) => [...current, sizeId]);
+      setDraftPrices((current) => ({
+        ...current,
+        [sizeId]: "", // initialize with blank
+      }));
+    }
+    setSizeToAdd("");
+  };
+
+  const handleRemoveSize = (sizeId: number) => {
+    setSelectedSizeIds((current) => current.filter(id => id !== sizeId));
+    setDraftPrices((current) => {
+      const updated = { ...current };
+      delete updated[sizeId];
+      return updated;
+    });
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const entriesToSave = lpgSizes
-      .map((size) => ({
+    // Elements currently present in the list
+    const entriesToSave = selectedSizeIds
+      .map((sizeId) => ({
         customer_id: customer.id,
-        lpg_size_id: size.id,
-        price: draftPrices[size.id],
+        lpg_size_id: sizeId,
+        price: draftPrices[sizeId],
       }))
-      .filter((entry) => entry.price !== "");
+      .filter((entry) => entry.price && entry.price !== "");
 
-    await Promise.all(
-      entriesToSave.map((entry) =>
+    // Find entries that existed before but are either removed or left blank
+    const previouslyExistingPrices = customerPrices.filter(
+      (price) => price.customer_id === customer.id
+    );
+
+    const entriesToDelete = previouslyExistingPrices.filter((existing) => {
+      // It is deleted if it's no longer in selectedSizeIds OR if its draft price is empty
+      const isSelected = selectedSizeIds.includes(existing.lpg_size_id);
+      const draftPrice = draftPrices[existing.lpg_size_id];
+      return !isSelected || !draftPrice || draftPrice === "";
+    });
+
+    await Promise.all([
+      ...entriesToSave.map((entry) =>
         saveCustomerPrice({
           customer_id: entry.customer_id,
           lpg_size_id: entry.lpg_size_id,
           price: Number(entry.price),
         })
+      ),
+      ...entriesToDelete.map((entry) =>
+        deleteCustomerPrice({
+          customerId: entry.customer_id,
+          lpgSizeId: entry.lpg_size_id,
+        })
       )
-    );
+    ]);
 
     setOpen(false);
   };
+
+  const unselectedSizes = lpgSizes.filter(size => !selectedSizeIds.includes(size.id));
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -284,47 +348,106 @@ function ManageCustomerPricesDialog({
       </DialogTrigger>
       <DialogContent className="max-h-[80vh] overflow-y-auto">
         <form onSubmit={handleSave}>
-          <DialogHeader>
+          <DialogHeader className="mb-4">
             <DialogTitle className="text-base">{customer.name}</DialogTitle>
             <DialogDescription className="text-sm">
-              Set custom prices for this customer. Leave blank to use standard pricing.
+              Set custom prices for this customer. Standard prices will be used for unselected sizes.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-3 py-4">
-            {lpgSizes.map((size) => (
-              <div key={size.id} className="grid gap-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor={`customer-${customer.id}-size-${size.id}`} className="text-sm font-medium">
-                    {size.name}
-                  </Label>
-                  <p className="text-xs text-muted-foreground">Standard: ₱{size.price.toLocaleString()}</p>
-                </div>
-                <Input
-                  id={`customer-${customer.id}-size-${size.id}`}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder={size.price.toString()}
-                  value={draftPrices[size.id] ?? ""}
-                  onChange={(e) =>
-                    setDraftPrices((current) => ({
-                      ...current,
-                      [size.id]: e.target.value,
-                    }))
-                  }
-                  className="h-9 text-sm"
-                />
-              </div>
-            ))}
+          <div className="flex items-center gap-2 mb-6">
+            <div className="flex-1">
+              <Select value={sizeToAdd} onValueChange={setSizeToAdd}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select LPG Size to add..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {unselectedSizes.length > 0 ? (
+                    unselectedSizes.map((size) => (
+                      <SelectItem key={size.id} value={size.id.toString()}>
+                        {size.name} (Std: ₱{size.price.toLocaleString()})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="none" disabled>
+                      All sizes added
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              type="button" 
+              variant="secondary" 
+              size="sm" 
+              className="h-9"
+              onClick={handleAddSize}
+              disabled={!sizeToAdd || sizeToAdd === "none"}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add
+            </Button>
           </div>
 
-          <DialogFooter>
+          <div className="grid gap-3 py-2">
+            {selectedSizeIds.length === 0 ? (
+              <div className="text-center py-6 text-sm text-muted-foreground border border-dashed rounded-md">
+                No custom prices set. Standard pricing will apply.
+              </div>
+            ) : (
+              selectedSizeIds.map((sizeId) => {
+                const size = lpgSizes.find(s => s.id === sizeId);
+                if (!size) return null;
+                return (
+                  <div key={size.id} className="flex flex-col gap-2 p-3 border rounded-md bg-muted/10">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`customer-${customer.id}-size-${size.id}`} className="text-sm font-medium">
+                        {size.name}
+                      </Label>
+                      <div className="flex items-center gap-4">
+                        <p className="text-sm text-muted-foreground">Standard: ₱{size.price.toLocaleString()}</p>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleRemoveSize(size.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground font-medium">₱</span>
+                      <Input
+                        id={`customer-${customer.id}-size-${size.id}`}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Enter custom price..."
+                        required
+                        value={draftPrices[size.id] ?? ""}
+                        onChange={(e) =>
+                          setDraftPrices((current) => ({
+                            ...current,
+                            [size.id]: e.target.value,
+                          }))
+                        }
+                        className="h-9 text-sm font-medium"
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <DialogFooter className="mt-6">
             <Button variant="ghost" type="button" onClick={() => setOpen(false)} disabled={isPending} size="sm">
               Cancel
             </Button>
             <Button type="submit" disabled={isPending} size="sm">
-              {isPending ? "Saving..." : "Save"}
+              {isPending ? "Saving..." : "Save Custom Prices"}
             </Button>
           </DialogFooter>
         </form>

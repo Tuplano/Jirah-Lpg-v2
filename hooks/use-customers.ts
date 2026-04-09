@@ -7,6 +7,7 @@ import {
   upsertCustomerLpgPrice,
   updateCustomer,
   deleteCustomer,
+  deleteCustomerLpgPrice,
 } from "@/services/customer-service";
 import { toast } from "sonner";
 
@@ -104,6 +105,25 @@ export function useDeleteCustomer() {
     onError: (error) => {
       console.error("Failed to delete customer:", error);
       toast.error("Failed to remove customer. They may have active transactions.");
+    }
+  });
+}
+
+export function useDeleteCustomerLpgPrice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ customerId, lpgSizeId }: { customerId: number; lpgSizeId: number }) => {
+      return await deleteCustomerLpgPrice(customerId, lpgSizeId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customer-lpg-prices"] });
+      queryClient.invalidateQueries({ queryKey: ["customer-lpg-price"] });
+      queryClient.invalidateQueries({ queryKey: ["sales"] });
+    },
+    onError: (error) => {
+      console.error("Failed to delete custom price:", error);
+      toast.error("Failed to remove custom price.");
     }
   });
 }

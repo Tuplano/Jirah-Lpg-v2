@@ -120,6 +120,16 @@ export async function deleteCustomer(id: number): Promise<void> {
       reference_table: 'customers',
       reference_id: id,
       quantity: 0,
-      note: `[DELETE] Customer #${id} removed.`
     });
+}
+
+export async function deleteCustomerLpgPrice(customerId: number, lpgSizeId: number): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("customer_lpg_prices")
+    .delete()
+    .eq("customer_id", customerId)
+    .eq("lpg_size_id", lpgSizeId);
+
+  if (error) throw error;
 }
