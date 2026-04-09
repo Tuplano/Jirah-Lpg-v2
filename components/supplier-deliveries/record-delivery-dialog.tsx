@@ -49,8 +49,9 @@ export function RecordDeliveryDialog({ suppliers, lpgSizes }: RecordDeliveryDial
   const { mutate: recordDelivery, isPending } = useRecordSupplierDelivery();
 
   const handleAddItem = () => {
-    if (lpgSizes.length > 0) {
-      setItems([...items, { lpg_size_id: lpgSizes[0].id, quantity: 1, unit_price: lpgSizes[0].price }]);
+    const availableSizes = lpgSizes.filter(s => s.supplier_id === parseInt(supplierId));
+    if (availableSizes.length > 0) {
+      setItems([...items, { lpg_size_id: availableSizes[0].id, quantity: 1, unit_price: availableSizes[0].price }]);
     }
   };
 
@@ -126,7 +127,7 @@ export function RecordDeliveryDialog({ suppliers, lpgSizes }: RecordDeliveryDial
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label className="text-sm font-medium">Supplier *</Label>
-                <Select value={supplierId} onValueChange={setSupplierId} required>
+                <Select value={supplierId} onValueChange={(val) => { setSupplierId(val); setItems([]); }} required>
                   <SelectTrigger className="h-9">
                     <SelectValue placeholder="Select Supplier" />
                   </SelectTrigger>
@@ -155,7 +156,7 @@ export function RecordDeliveryDialog({ suppliers, lpgSizes }: RecordDeliveryDial
             <div className="grid gap-2">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">Items Delivered *</Label>
-                <Button type="button" variant="outline" size="sm" onClick={handleAddItem} className="h-7 text-xs">
+                <Button type="button" variant="outline" size="sm" onClick={handleAddItem} disabled={!supplierId} className="h-7 text-xs">
                   <PackageOpen className="h-3 w-3 mr-1" /> Add Item
                 </Button>
               </div>
@@ -178,7 +179,7 @@ export function RecordDeliveryDialog({ suppliers, lpgSizes }: RecordDeliveryDial
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {lpgSizes.map(size => (
+                            {lpgSizes.filter(s => s.supplier_id === parseInt(supplierId)).map(size => (
                               <SelectItem key={size.id} value={size.id.toString()}>{size.name}</SelectItem>
                             ))}
                           </SelectContent>

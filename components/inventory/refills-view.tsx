@@ -59,7 +59,10 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
   const refillBatches = (refills || initialRefills) as RefillBatch[];
   const summarizedRefills: RefillProductSummary[] = refillBatches.map((batch) => {
     const items = batch.refill_batch_items || [];
-    const names = items.map((item) => item.lpg_sizes?.name || "Unknown LPG Size");
+    const names = items.map((item) => {
+      const brand = item.lpg_sizes?.suppliers?.name ? `[${item.lpg_sizes.suppliers.name}] ` : "";
+      return `${brand}${item.lpg_sizes?.name || "Unknown LPG Size"}`;
+    });
     const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
 
     return {
@@ -141,7 +144,9 @@ export function RefillsView({ initialRefills, lpgSizes: initialLpgSizes, initial
                     <div className="space-y-0.5">
                       {refill.items.map((item) => (
                         <div key={item.id} className="text-xs">
-                          <span className="font-medium">{item.quantity}x {item.lpg_sizes?.name}</span>
+                          <span className="font-medium">
+                            {item.quantity}x {item.lpg_sizes?.suppliers?.name ? `[${item.lpg_sizes.suppliers.name}] ` : ""}{item.lpg_sizes?.name}
+                          </span>
                           {item.lpg_sizes ? (
                             <span className="text-muted-foreground text-xs block">
                               ₱{(item.price_per_kilo * item.lpg_sizes.size * item.quantity).toLocaleString(undefined, {

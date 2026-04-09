@@ -262,7 +262,7 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
                         <SelectContent>
                           {lpgSizes?.map((size) => (
                             <SelectItem key={size.id} value={size.id.toString()}>
-                              {size.name}
+                              {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

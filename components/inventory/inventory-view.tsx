@@ -26,7 +26,8 @@ export function InventoryView({ initialStocks, unmanagedSizes: initialUnmanaged 
   const [searchTerm, setSearchTerm] = React.useState("");
 
   const filteredStocks = (stocks || initialStocks).filter((item) =>
-    item.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase())
+    item.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.lpg_sizes?.suppliers?.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const totalFull = filteredStocks.reduce((acc, item) => acc + item.full_count, 0);
@@ -93,6 +94,7 @@ export function InventoryView({ initialStocks, unmanagedSizes: initialUnmanaged 
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30 border-b border-border/50">
+              <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Brand</TableHead>
               <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Size</TableHead>
               <TableHead className="text-center font-semibold text-xs uppercase tracking-[0.08em] text-primary">Full</TableHead>
               <TableHead className="text-center font-semibold text-xs uppercase tracking-[0.08em] text-destructive">Empty</TableHead>
@@ -105,6 +107,9 @@ export function InventoryView({ initialStocks, unmanagedSizes: initialUnmanaged 
             {filteredStocks.length > 0 ? (
               filteredStocks.map((stock) => (
                 <TableRow key={stock.id} className="hover:bg-muted/20 transition-colors">
+                  <TableCell className="font-medium text-sm text-foreground/80">
+                    {stock.lpg_sizes?.suppliers?.name || "N/A"}
+                  </TableCell>
                   <TableCell className="font-medium text-sm">{stock.lpg_sizes?.name}</TableCell>
                   <TableCell className="text-center font-semibold text-sm text-primary">{stock.full_count}</TableCell>
                   <TableCell className="text-center font-semibold text-sm text-destructive">{stock.empty_count}</TableCell>

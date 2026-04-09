@@ -258,7 +258,7 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
                         <SelectContent>
                           {(lpgSizes || initialLpgSizes || []).map((size) => (
                             <SelectItem key={size.id} value={size.id.toString()}>
-                              {size.name}
+                              {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

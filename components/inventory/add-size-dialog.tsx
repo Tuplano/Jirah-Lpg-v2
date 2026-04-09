@@ -87,7 +87,7 @@ export function AddSizeDialog({ unmanagedSizes }: AddSizeDialogProps) {
                     {unmanagedSizes.length > 0 ? (
                       unmanagedSizes.map((size) => (
                         <SelectItem key={size.id} value={size.id.toString()}>
-                          {size.name} (₱{size.price})
+                          {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name} (₱{size.price})
                         </SelectItem>
                       ))
                     ) : (

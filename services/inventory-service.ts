@@ -7,7 +7,7 @@ export async function getStockLevels(): Promise<Inventory[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("inventory")
-    .select("*, lpg_sizes(*)")
+    .select("*, lpg_sizes(*, suppliers(*))")
     .order("lpg_size_id", { ascending: true });
 
   if (error) throw error;

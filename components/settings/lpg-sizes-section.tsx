@@ -22,6 +22,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useCreateLpgSize, useUpdateLpgSize, useDeleteLpgSize } from "@/hooks/use-settings";
+import { useSuppliers } from "@/hooks/use-suppliers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -69,6 +71,7 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30 border-b border-border/50">
+              <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Brand</TableHead>
               <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Size</TableHead>
               <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Kilos</TableHead>
               <TableHead className="font-semibold text-xs uppercase tracking-[0.08em]">Price</TableHead>
@@ -80,6 +83,9 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
             {filteredSizes.length > 0 ? (
               filteredSizes.map((size) => (
                 <TableRow key={size.id} className="hover:bg-muted/20 transition-colors">
+                  <TableCell className="font-medium text-sm text-foreground/80">
+                    {size.suppliers?.name || "N/A"}
+                  </TableCell>
                   <TableCell className="text-sm">
                     <div className="flex items-center gap-2">
                       <div className="flex h-7 w-7 items-center justify-center rounded bg-primary/10 text-primary text-xs font-semibold">
@@ -180,20 +186,25 @@ export function LpgSizesSection({ sizes }: LpgSizesSectionProps) {
 }
 
 function CreateSizeDialog() {
+  const [supplierId, setSupplierId] = React.useState("");
   const [name, setName] = React.useState("");
   const [price, setPrice] = React.useState("");
   const [size, setSize] = React.useState("");
   const [open, setOpen] = React.useState(false);
   const { mutate: createSize, isPending } = useCreateLpgSize();
+  const { data: suppliers } = useSuppliers();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!supplierId) return;
+
     createSize(
-      { name, price: Number(price), size: Number(size) },
+      { supplier_id: Number(supplierId), name, price: Number(price), size: Number(size) },
       {
         onSuccess: () => {
           setOpen(false);
+          setSupplierId("");
           setName("");
           setPrice("");
           setSize("");
@@ -220,12 +231,29 @@ function CreateSizeDialog() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
+              <Label htmlFor="supplier" className="text-sm font-medium">
+                Brand / Supplier *
+              </Label>
+              <Select value={supplierId} onValueChange={setSupplierId} required>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select a supplier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers?.map((supplier) => (
+                    <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                      {supplier.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
               <Label htmlFor="name" className="text-sm font-medium">
                 Size Name *
               </Label>
               <Input
                 id="name"
-                placeholder="e.g. 11kg or Mini"
+                placeholder="e.g. Solane 11kg"
                 value={name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                 className="h-9 text-sm"
@@ -280,13 +308,16 @@ function CreateSizeDialog() {
 }
 
 function EditSizeDialog({ open, onOpenChange, size }: { open: boolean; onOpenChange: (open: boolean) => void; size: LpgSize | null }) {
+  const [supplierId, setSupplierId] = React.useState("");
   const [name, setName] = React.useState("");
   const [price, setPrice] = React.useState("");
   const [kilos, setKilos] = React.useState("");
   const { mutate: updateSize, isPending } = useUpdateLpgSize();
+  const { data: suppliers } = useSuppliers();
 
   React.useEffect(() => {
     if (open && size) {
+      setSupplierId(size.supplier_id?.toString() || "");
       setName(size.name);
       setPrice(size.price.toString());
       setKilos(size.size.toString());
@@ -298,8 +329,10 @@ function EditSizeDialog({ open, onOpenChange, size }: { open: boolean; onOpenCha
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!supplierId) return;
+
     updateSize(
-      { id: size.id, name, price: Number(price), size: Number(kilos) },
+      { id: size.id, supplier_id: Number(supplierId), name, price: Number(price), size: Number(kilos) },
       {
         onSuccess: () => {
           onOpenChange(false);
@@ -319,6 +352,23 @@ function EditSizeDialog({ open, onOpenChange, size }: { open: boolean; onOpenCha
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor={`edit-supplier-${size.id}`} className="text-sm font-medium">
+                Brand / Supplier *
+              </Label>
+              <Select value={supplierId} onValueChange={setSupplierId} required>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select a supplier" />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers?.map((supplier) => (
+                    <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                      {supplier.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid gap-2">
               <Label htmlFor={`edit-name-${size.id}`} className="text-sm font-medium">
                 Size Name

@@ -3,35 +3,25 @@
 import { createClient } from "@/lib/supabase/server";
 import { LpgSize } from "@/types";
 
-function normalizeLpgSizeName(name: string): string {
-  const trimmed = name.trim().replace(/\s+/g, " ");
-
-  if (/^\d+(\.\d+)?$/u.test(trimmed)) {
-    return `${trimmed}kg`;
-  }
-
-  return trimmed.replace(/^(\d+(?:\.\d+)?)\s*(kg|kilos?)\b/iu, (_, value) => `${value}kg`);
-}
-
 export async function getAllLpgSizes(): Promise<LpgSize[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("lpg_sizes")
-    .select("*")
+    .select("*, suppliers(*)")
     .order("name", { ascending: true });
 
   if (error) throw error;
   return data || [];
 }
 
-export async function createLpgSize(name: string, price: number, size: number): Promise<LpgSize> {
+export async function createLpgSize(supplier_id: number, name: string, price: number, size: number): Promise<LpgSize> {
   const supabase = await createClient();
-  const normalizedName = normalizeLpgSizeName(name);
+  const trimmedName = name.trim();
   
   // 1. Create the LPG Size (No inventory initialization here anymore)
   const { data: createdSize, error: sizeError } = await supabase
     .from("lpg_sizes")
-    .insert({ name: normalizedName, price, size })
+    .insert({ supplier_id, name: trimmedName, price, size })
     .select()
     .single();
 
@@ -45,7 +35,7 @@ export async function createLpgSize(name: string, price: number, size: number): 
       reference_table: 'lpg_sizes',
       reference_id: createdSize.id,
       quantity: 0,
-      note: `[CREATE] New LPG Size: ${normalizedName} @ ₱${price}`
+      note: `[CREATE] New LPG Size: ${trimmedName} @ ₱${price}`
     });
 
   return createdSize;
@@ -112,7 +102,7 @@ export async function updateLpgSize(id: number, updates: Partial<LpgSize>): Prom
   const supabase = await createClient();
   const normalizedUpdates = {
     ...updates,
-    name: updates.name ? normalizeLpgSizeName(updates.name) : updates.name,
+    name: updates.name ? updates.name.trim() : updates.name,
   };
 
   const { data, error } = await supabase
