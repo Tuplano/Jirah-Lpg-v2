@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { Supplier, LpgSize } from "@/types";
 import { useRecordSupplierDelivery } from "@/hooks/use-suppliers";
+import { useInventory } from "@/hooks/use-inventory";
 
 interface RecordDeliveryDialogProps {
   suppliers: Supplier[];
@@ -45,11 +46,36 @@ export function RecordDeliveryDialog({ suppliers, lpgSizes }: RecordDeliveryDial
   const [deliveryFee, setDeliveryFee] = React.useState<number>(0);
   const [note, setNote] = React.useState("");
   const [items, setItems] = React.useState<DeliveryItem[]>([]);
+  const { data: inventory } = useInventory();
+
+  const totalEmptyStock = React.useMemo(() => {
+    if (!supplierId || !inventory) return 0;
+    const supplierSizeIds = new Set(lpgSizes.filter(s => s.supplier_id === parseInt(supplierId)).map(s => s.id));
+    return inventory
+      .filter(inv => supplierSizeIds.has(inv.lpg_size_id))
+      .reduce((sum, inv) => sum + (inv.empty_count || 0), 0);
+  }, [supplierId, inventory, lpgSizes]);
 
   const { mutate: recordDelivery, isPending } = useRecordSupplierDelivery();
 
+  // Switch to purchase if exchange is selected but no empties are available
+  React.useEffect(() => {
+    if (supplierId && totalEmptyStock === 0 && type === 'exchange') {
+      setType('purchase');
+    }
+  }, [supplierId, totalEmptyStock, type]);
+
   const handleAddItem = () => {
-    const availableSizes = lpgSizes.filter(s => s.supplier_id === parseInt(supplierId));
+    let availableSizes = lpgSizes.filter(s => s.supplier_id === parseInt(supplierId));
+    
+    // In exchange mode, only allow adding items that have empty stock
+    if (type === 'exchange') {
+      availableSizes = availableSizes.filter(s => {
+        const invItem = inventory?.find(inv => inv.lpg_size_id === s.id);
+        return invItem && invItem.empty_count > 0;
+      });
+    }
+
     if (availableSizes.length > 0) {
       setItems([...items, { lpg_size_id: availableSizes[0].id, quantity: 1, unit_price: availableSizes[0].price }]);
     }
@@ -146,7 +172,9 @@ export function RecordDeliveryDialog({ suppliers, lpgSizes }: RecordDeliveryDial
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="exchange">Exchange (Give Empties, Get Full)</SelectItem>
+                    <SelectItem value="exchange" disabled={totalEmptyStock === 0}>
+                      Exchange (Give Empties, Get Full) {totalEmptyStock === 0 && supplierId && "(No empties)"}
+                    </SelectItem>
                     <SelectItem value="purchase">Purchase (Get Full only)</SelectItem>
                   </SelectContent>
                 </Select>
@@ -179,9 +207,28 @@ export function RecordDeliveryDialog({ suppliers, lpgSizes }: RecordDeliveryDial
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {lpgSizes.filter(s => s.supplier_id === parseInt(supplierId)).map(size => (
-                              <SelectItem key={size.id} value={size.id.toString()}>{size.name}</SelectItem>
-                            ))}
+                             {lpgSizes.filter(s => {
+                               const isCorrectSupplier = s.supplier_id === parseInt(supplierId);
+                               if (!isCorrectSupplier) return false;
+                               
+                               // If exchange, only show items with empty stock
+                               if (type === 'exchange') {
+                                 const invItem = inventory?.find(inv => inv.lpg_size_id === s.id);
+                                 return invItem && invItem.empty_count > 0;
+                               }
+                               
+                               return true;
+                             }).map(size => {
+                               const invItem = inventory?.find(inv => inv.lpg_size_id === size.id);
+                               return (
+                                 <SelectItem key={size.id} value={size.id.toString()}>
+                                   {size.name}
+                                   <span className="ml-2 text-[10px] text-muted-foreground">
+                                     (Stock: {invItem?.full_count || 0}F, {invItem?.empty_count || 0}E)
+                                   </span>
+                                 </SelectItem>
+                               );
+                             })}
                           </SelectContent>
                         </Select>
                       </div>

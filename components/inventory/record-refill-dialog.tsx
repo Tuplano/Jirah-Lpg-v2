@@ -239,11 +239,20 @@ export function RecordRefillDialog({ lpgSizes, inventory }: RecordRefillDialogPr
                             <SelectValue placeholder="Select LPG size" />
                           </SelectTrigger>
                           <SelectContent>
-                            {lpgSizes.map((size) => (
-                              <SelectItem key={size.id} value={size.id.toString()}>
-                                {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name}
-                              </SelectItem>
-                            ))}
+                            {lpgSizes.filter(size => {
+                              const invItem = inventoryMap.get(size.id);
+                              return invItem && invItem.empty_count > 0;
+                            }).map((size) => {
+                              const invItem = inventoryMap.get(size.id);
+                              return (
+                                <SelectItem key={size.id} value={size.id.toString()}>
+                                  {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name}
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    ({invItem?.empty_count || 0} empty)
+                                  </span>
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                       </div>

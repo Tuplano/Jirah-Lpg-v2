@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateSale, useLpgSizes } from "@/hooks/use-sales";
+import { useInventory } from "@/hooks/use-inventory";
 import { useCustomers } from "@/hooks/use-customers";
 import { ShoppingCart, Plus, Trash2 } from "lucide-react";
 import { LpgSize } from "@/types";
@@ -33,6 +34,7 @@ interface SaleLineItem {
 
 export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialogProps) {
   const { data: lpgSizes } = useLpgSizes();
+  const { data: inventory } = useInventory();
   const { data: customersResponse } = useCustomers();
   const [customerId, setCustomerId] = React.useState<string>("walk-in");
   const [type, setType] = React.useState<'sale' | 'exchange'>('exchange');
@@ -256,11 +258,20 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(lpgSizes || initialLpgSizes || []).map((size) => (
-                            <SelectItem key={size.id} value={size.id.toString()}>
-                              {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name}
-                            </SelectItem>
-                          ))}
+                          {(lpgSizes || initialLpgSizes || []).filter(size => {
+                            const stockItem = inventory?.find(inv => inv.lpg_size_id === size.id);
+                            return stockItem && stockItem.full_count > 0;
+                          }).map((size) => {
+                            const stockItem = inventory?.find(inv => inv.lpg_size_id === size.id);
+                            return (
+                              <SelectItem key={size.id} value={size.id.toString()}>
+                                {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name} 
+                                <span className="ml-2 text-xs text-muted-foreground">
+                                  ({stockItem?.full_count || 0} in stock)
+                                </span>
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>

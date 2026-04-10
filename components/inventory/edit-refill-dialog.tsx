@@ -231,11 +231,22 @@ export function EditRefillDialog({ open, onOpenChange, refill, lpgSizes, invento
                             <SelectValue placeholder="Select LPG size" />
                           </SelectTrigger>
                           <SelectContent>
-                            {lpgSizes.map((size) => (
-                              <SelectItem key={size.id} value={size.id.toString()}>
-                                {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name}
-                              </SelectItem>
-                            ))}
+                            {lpgSizes.filter(size => {
+                              // Keep if it has empty stock OR if it's currently selected in ANY item of this batch
+                              const invItem = inventoryMap.get(size.id);
+                              const isCurrentlySelected = products.some(p => p.sizeId === size.id.toString());
+                              return (invItem && invItem.empty_count > 0) || isCurrentlySelected;
+                            }).map((size) => {
+                              const invItem = inventoryMap.get(size.id);
+                              return (
+                                <SelectItem key={size.id} value={size.id.toString()}>
+                                  {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name}
+                                  <span className="ml-2 text-xs text-muted-foreground">
+                                    ({invItem?.empty_count || 0} empty)
+                                  </span>
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                       </div>

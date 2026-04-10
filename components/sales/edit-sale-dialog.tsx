@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUpdateSale } from "@/hooks/use-sales";
+import { useInventory } from "@/hooks/use-inventory";
 import { useCustomers } from "@/hooks/use-customers";
 import { Sale, LpgSize } from "@/types";
 import { getCustomerLpgPrice } from "@/services/customer-service";
@@ -40,6 +41,7 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
     { id: '1', lpgSizeId: '', quantity: '1', unitPrice: '' }
   ]);
 
+  const { data: inventory } = useInventory();
   const { data: customersResponse } = useCustomers();
   const { mutate: updateSale, isPending } = useUpdateSale();
 
@@ -260,11 +262,22 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
-                          {lpgSizes?.map((size) => (
-                            <SelectItem key={size.id} value={size.id.toString()}>
-                              {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name}
-                            </SelectItem>
-                          ))}
+                          {(lpgSizes || []).filter(size => {
+                            // Keep if it has stock OR if it's currently selected in ANY item of this sale
+                            const stockItem = inventory?.find(inv => inv.lpg_size_id === size.id);
+                            const isCurrentlySelected = items.some(item => item.lpgSizeId === size.id.toString());
+                            return (stockItem && stockItem.full_count > 0) || isCurrentlySelected;
+                          }).map((size) => {
+                            const stockItem = inventory?.find(inv => inv.lpg_size_id === size.id);
+                            return (
+                              <SelectItem key={size.id} value={size.id.toString()}>
+                                {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name}
+                                <span className="ml-2 text-xs text-muted-foreground">
+                                  ({stockItem?.full_count || 0} in stock)
+                                </span>
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
