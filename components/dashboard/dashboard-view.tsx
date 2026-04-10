@@ -17,6 +17,8 @@ interface DashboardViewProps {
     totalRefill: number;
     todaySalesCount: number;
     todayRevenue: number;
+    totalProfit: number;
+    todayProfit: number;
   };
 }
 
@@ -98,15 +100,31 @@ export function DashboardView({ stats }: DashboardViewProps) {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-[0.08em]">Today&apos;s Sales</p>
                   <p className="text-2xl font-bold">₱{stats.todayRevenue.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">{stats.todaySalesCount} units sold</p>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs text-muted-foreground">{stats.todaySalesCount} units sold</p>
+                    <div className="flex items-center gap-1.5">
+                      <div className={`h-1.5 w-1.5 rounded-full ${stats.todayProfit >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                      <p className={`text-[11px] font-bold ${stats.todayProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        ₱{stats.todayProfit.toLocaleString()} Profit
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-[0.08em]">All Time</p>
                   <p className="text-2xl font-bold">₱{stats.totalSalesRevenue.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">{stats.totalSalesQuantity} units total</p>
+                  <div className="flex flex-col gap-1">
+                    <p className="text-xs text-muted-foreground">{stats.totalSalesQuantity} units total</p>
+                    <div className="flex items-center gap-1.5">
+                      <div className={`h-1.5 w-1.5 rounded-full ${stats.totalProfit >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                      <p className={`text-[11px] font-bold ${stats.totalProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                        ₱{stats.totalProfit.toLocaleString()} Profit
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>

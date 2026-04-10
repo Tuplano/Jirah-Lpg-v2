@@ -178,24 +178,27 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
           Record Sale
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-full max-w-5xl max-h-[95vh] overflow-y-auto">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <DialogHeader className="space-y-2">
-            <DialogTitle className="text-xl">Record Sale</DialogTitle>
-            <DialogDescription className="text-sm">
+      <DialogContent className="w-full max-w-4xl max-h-[95vh] overflow-y-auto p-0">
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <DialogHeader className="p-6 pb-2 space-y-1">
+            <div className="flex items-center gap-2 text-primary">
+              <ShoppingCart className="h-5 w-5" />
+              <DialogTitle className="text-xl">Record Sale</DialogTitle>
+            </div>
+            <DialogDescription className="text-sm text-muted-foreground/80">
               Add products to create a sale transaction. Inventory will update automatically.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-5">
-            {/* Customer & Type Row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="customer" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Customer
+          <div className="px-6 py-4 space-y-8">
+            {/* Header Form Section */}
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-2.5">
+                <Label htmlFor="customer" className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">
+                  Customer Details
                 </Label>
                 <Select value={customerId} onValueChange={setCustomerId}>
-                  <SelectTrigger id="customer" className="h-9 border-border/50">
+                  <SelectTrigger id="customer" className="h-10 border-border/60 bg-background/50">
                     <SelectValue placeholder="Select customer" />
                   </SelectTrigger>
                   <SelectContent>
@@ -209,12 +212,12 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="type" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Sale Type
+              <div className="space-y-2.5">
+                <Label htmlFor="type" className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">
+                  Transaction Type
                 </Label>
                 <Select value={type} onValueChange={(v: any) => setType(v)}>
-                  <SelectTrigger id="type" className="h-9 border-border/50">
+                  <SelectTrigger id="type" className="h-10 border-border/60 bg-background/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -226,35 +229,35 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
             </div>
 
             {/* Line Items Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-semibold">Products</Label>
-                  <p className="text-xs text-muted-foreground">Add one or more items to this sale</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-1 bg-primary rounded-full" />
+                  <Label className="text-xs font-bold uppercase tracking-[0.1em] text-foreground">Line Items</Label>
                 </div>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={addItem}
-                  className="gap-1.5 h-8 text-xs"
+                  className="h-8 text-[11px] font-semibold text-primary hover:text-primary hover:bg-primary/10 transition-colors"
                 >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add Item
+                  <Plus className="h-3 w-3 mr-1.5" />
+                  Add Product
                 </Button>
               </div>
 
-              <div className="space-y-2 border border-border/50 rounded-lg p-5 bg-card/30">
+              <div className="space-y-3">
                 {items.map((item, idx) => (
-                  <div key={item.id} className="grid grid-cols-12 gap-3 items-end pb-3 last:pb-0 border-b border-border/25 last:border-b-0">
+                  <div key={item.id} className="group flex flex-col sm:flex-row items-end gap-3 p-4 rounded-lg bg-muted/20 border border-border/40 hover:border-border/80 transition-all duration-200">
                     {/* LPG Size */}
-                    <div className="col-span-4 space-y-1">
-                      <Label htmlFor={`size-${item.id}`} className="text-xs font-medium">Product</Label>
+                    <div className="flex-[2] w-full space-y-1.5">
+                      <Label htmlFor={`size-${item.id}`} className="text-[10px] uppercase font-semibold text-muted-foreground/70 ml-1">Product</Label>
                       <Select 
                         value={item.lpgSizeId} 
                         onValueChange={(val) => updateItem(item.id, 'lpgSizeId', val)}
                       >
-                        <SelectTrigger id={`size-${item.id}`} className="h-8 border-border/50 text-xs">
+                        <SelectTrigger id={`size-${item.id}`} className="h-9 border-border/60 bg-background shadow-xs transition-shadow focus:ring-1">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
@@ -266,8 +269,8 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
                             return (
                               <SelectItem key={size.id} value={size.id.toString()}>
                                 {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name} 
-                                <span className="ml-2 text-xs text-muted-foreground">
-                                  ({stockItem?.full_count || 0} in stock)
+                                <span className="ml-2 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm">
+                                  {stockItem?.full_count || 0} in stock
                                 </span>
                               </SelectItem>
                             );
@@ -277,41 +280,49 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
                     </div>
 
                     {/* Quantity */}
-                    <div className="col-span-2 space-y-1">
-                      <Label htmlFor={`qty-${item.id}`} className="text-xs font-medium">Qty</Label>
+                    <div className="w-full sm:w-24 space-y-1.5">
+                      <Label htmlFor={`qty-${item.id}`} className="text-[10px] uppercase font-semibold text-muted-foreground/70 ml-1">Qty</Label>
                       <Input
                         id={`qty-${item.id}`}
                         type="number"
                         min="1"
-                        className="h-8 border-border/50 text-xs"
+                        className="h-9 border-border/60 bg-background shadow-xs transition-shadow focus:ring-1 text-center font-medium"
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
                       />
                     </div>
 
                     {/* Unit Price */}
-                    <div className="col-span-3 space-y-1">
-                      <Label htmlFor={`price-${item.id}`} className="text-xs font-medium">Unit Price (₱)</Label>
+                    <div className="w-full sm:w-32 space-y-1.5">
+                      <Label htmlFor={`price-${item.id}`} className="text-[10px] uppercase font-semibold text-muted-foreground/70 ml-1">Unit Price (₱)</Label>
                       <Input
                         id={`price-${item.id}`}
                         type="number"
                         min="0"
                         step="0.01"
-                        className="h-8 border-border/50 text-xs"
+                        className="h-9 border-border/60 bg-background shadow-xs transition-shadow focus:ring-1 text-right font-medium pr-3"
                         value={item.unitPrice}
                         onChange={(e) => updateItem(item.id, 'unitPrice', e.target.value)}
                       />
                     </div>
 
+                    {/* Line Total Display */}
+                    <div className="w-full sm:w-32 space-y-1.5">
+                      <Label className="text-[10px] uppercase font-semibold text-muted-foreground/70 ml-1">Total</Label>
+                      <div className="h-9 flex items-center justify-end px-3 rounded-md bg-background/50 border border-border/40 text-sm font-semibold text-primary">
+                        ₱{(Number(item.quantity) * Number(item.unitPrice) || 0).toLocaleString()}
+                      </div>
+                    </div>
+
                     {/* Remove Button */}
-                    <div className="col-span-3 flex justify-end">
+                    <div className="pb-0.5">
                       <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={() => removeItem(item.id)}
                         disabled={items.length === 1}
-                        className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                        className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-0"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -321,27 +332,42 @@ export function RecordSaleDialog({ lpgSizes: initialLpgSizes }: RecordSaleDialog
               </div>
             </div>
 
-            {/* Total Price Display */}
-            <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/2 p-4">
-              <div className="flex justify-between items-end gap-4">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Total Amount</p>
-                  <p className="text-2xl font-bold tracking-tight text-primary">₱{totalPrice.toLocaleString()}</p>
+            {/* Price Breakdown / Footer Summary */}
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 mt-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60">Total Amount Due</p>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-lg font-medium text-primary/60">₱</span>
+                    <span className="text-3xl font-bold tracking-tight text-primary">
+                      {totalPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right text-xs text-muted-foreground">
-                  {items.length} item{items.length !== 1 ? 's' : ''}
+                
+                <div className="flex items-center gap-4 text-[11px] font-medium text-muted-foreground/80 bg-background/50 px-4 py-2 rounded-full border border-border/40">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                    <span>{items.length} Product{items.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="w-px h-3 bg-border/60" />
+                  <span>{items.reduce((acc, current) => acc + Number(current.quantity || 0), 0)} Total Units</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <DialogFooter className="gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="h-9">
+          <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border/40 gap-3">
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="h-10 px-6 font-semibold">
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending || items.some(i => !i.lpgSizeId || !i.unitPrice) || totalPrice === 0} className="h-9 gap-2">
-              {isPending && <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />}
-              {isPending ? "Processing..." : "Record Sale"}
+            <Button type="submit" disabled={isPending || items.some(i => !i.lpgSizeId || !i.unitPrice) || totalPrice === 0} className="h-10 px-8 font-bold gap-2 shadow-sm shadow-primary/20">
+              {isPending ? (
+                 <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              ) : (
+                <ShoppingCart className="h-4 w-4" />
+              )}
+              {isPending ? "Processing..." : "Confirm & Record Sale"}
             </Button>
           </DialogFooter>
         </form>

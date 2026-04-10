@@ -37,7 +37,7 @@ export async function getDashboardStats() {
   today.setHours(0, 0, 0, 0);
   const { data: todaySalesData, error: todayError } = await supabase
     .from("sales")
-    .select("total_price")
+    .select("id, total_price")
     .gte("created_at", today.toISOString());
 
   if (todayError) throw todayError;
@@ -56,6 +56,24 @@ export async function getDashboardStats() {
   const todaySalesCount = todayItems.reduce((acc: number, curr: any) => acc + curr.quantity, 0);
   const todayRevenue = (todaySalesData || []).reduce((acc: number, curr: any) => acc + Number(curr.total_price), 0);
 
+  // 4. Costs (Refills & Deliveries) for Profit Calculation
+  const { data: refillData } = await supabase.from("refill_batches").select("cost, created_at");
+  const { data: deliveryData } = await supabase.from("supplier_deliveries").select("total_cost, created_at");
+
+  const totalRefillCost = (refillData || []).reduce((acc, curr) => acc + Number(curr.cost || 0), 0);
+  const totalDeliveryCost = (deliveryData || []).reduce((acc, curr) => acc + Number(curr.total_cost || 0), 0);
+  
+  const todayRefillCost = (refillData || [])
+    .filter(r => new Date(r.created_at) >= today)
+    .reduce((acc, curr) => acc + Number(curr.cost || 0), 0);
+    
+  const todayDeliveryCost = (deliveryData || [])
+    .filter(d => new Date(d.created_at) >= today)
+    .reduce((acc, curr) => acc + Number(curr.total_cost || 0), 0);
+
+  const totalSalesCost = totalRefillCost + totalDeliveryCost;
+  const todaySalesCost = todayRefillCost + todayDeliveryCost;
+
   return {
     totalSalesQuantity,
     totalSalesRevenue,
@@ -63,7 +81,9 @@ export async function getDashboardStats() {
     totalEmpty,
     totalRefill,
     todaySalesCount,
-    todayRevenue
+    todayRevenue,
+    totalProfit: totalSalesRevenue - totalSalesCost,
+    todayProfit: todayRevenue - todaySalesCost
   };
 }
 

@@ -18,7 +18,7 @@ import { useInventory } from "@/hooks/use-inventory";
 import { useCustomers } from "@/hooks/use-customers";
 import { Sale, LpgSize } from "@/types";
 import { getCustomerLpgPrice } from "@/services/customer-service";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ShoppingCart } from "lucide-react";
 
 interface EditSaleDialogProps {
   open: boolean;
@@ -182,29 +182,31 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-5xl max-h-[95vh] overflow-y-auto">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <DialogHeader className="space-y-2">
-            <DialogTitle className="text-xl">Edit Sale</DialogTitle>
-            <DialogDescription className="text-sm">
-              Modify products and sale details. Inventory changes will be reversed and reapplied.
+      <DialogContent className="w-full max-w-4xl max-h-[95vh] overflow-y-auto p-0">
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <DialogHeader className="p-6 pb-2 space-y-1">
+            <div className="flex items-center gap-2 text-primary">
+              <ShoppingCart className="h-5 w-5" />
+              <DialogTitle className="text-xl">Edit Sale Transaction</DialogTitle>
+            </div>
+            <DialogDescription className="text-sm text-muted-foreground/80">
+              Update sale items and transaction details. Inventory will adjust automatically.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-5">
-            {/* Customer & Type Row */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="customer" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Customer
+          <div className="px-6 py-4 space-y-8">
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-2.5">
+                <Label htmlFor="customer" className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">
+                  Customer Details
                 </Label>
                 <Select value={customerId} onValueChange={setCustomerId}>
-                  <SelectTrigger id="customer" className="h-9 border-border/50">
-                    <SelectValue placeholder="Walk-in" />
+                  <SelectTrigger id="customer" className="h-10 border-border/60 bg-background/50">
+                    <SelectValue placeholder="Select customer" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Walk-in (No Customer)</SelectItem>
-                    {customersResponse?.data.map((customer) => (
+                    <SelectItem value="walk-in">Walk-in / Default Price</SelectItem>
+                    {(customersResponse?.data || []).map((customer) => (
                       <SelectItem key={customer.id} value={customer.id.toString()}>
                         {customer.name}
                       </SelectItem>
@@ -213,12 +215,12 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="sale-type" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Sale Type
+              <div className="space-y-2.5">
+                <Label htmlFor="type" className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80">
+                  Transaction Type
                 </Label>
-                <Select value={saleType} onValueChange={(value: "sale" | "exchange") => setSaleType(value)}>
-                  <SelectTrigger id="sale-type" className="h-9 border-border/50">
+                <Select value={saleType} onValueChange={(v: any) => setSaleType(v)}>
+                  <SelectTrigger id="type" className="h-10 border-border/60 bg-background/50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -229,51 +231,49 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
               </div>
             </div>
 
-            {/* Line Items Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-semibold">Products</Label>
-                  <p className="text-xs text-muted-foreground">Manage items in this sale</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-border/40 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-1 bg-primary rounded-full" />
+                  <Label className="text-xs font-bold uppercase tracking-[0.1em] text-foreground">Line Items</Label>
                 </div>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={addItem}
-                  className="gap-1.5 h-8 text-xs"
+                  className="h-8 text-[11px] font-semibold text-primary hover:text-primary hover:bg-primary/10 transition-colors"
                 >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add Item
+                  <Plus className="h-3 w-3 mr-1.5" />
+                  Add Product
                 </Button>
               </div>
 
-              <div className="space-y-2 border border-border/50 rounded-lg p-5 bg-card/30">
-                {items.map((item, idx) => (
-                  <div key={item.id} className="grid grid-cols-12 gap-3 items-end pb-3 last:pb-0 border-b border-border/25 last:border-b-0">
-                    {/* LPG Size */}
-                    <div className="col-span-4 space-y-1">
-                      <Label htmlFor={`size-${item.id}`} className="text-xs font-medium">Product</Label>
+              <div className="space-y-3">
+                {items.map((item) => (
+                  <div key={item.id} className="group flex flex-col sm:flex-row items-end gap-3 p-4 rounded-lg bg-muted/20 border border-border/40 hover:border-border/80 transition-all duration-200">
+                    <div className="flex-[2] w-full space-y-1.5">
+                      <Label htmlFor={`size-${item.id}`} className="text-[10px] uppercase font-semibold text-muted-foreground/70 ml-1">Product</Label>
                       <Select 
                         value={item.lpgSizeId} 
                         onValueChange={(val) => updateItem(item.id, 'lpgSizeId', val)}
                       >
-                        <SelectTrigger id={`size-${item.id}`} className="h-8 border-border/50 text-xs">
+                        <SelectTrigger id={`size-${item.id}`} className="h-9 border-border/60 bg-background shadow-xs transition-shadow focus:ring-1">
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
                           {(lpgSizes || []).filter(size => {
-                            // Keep if it has stock OR if it's currently selected in ANY item of this sale
+                            const isCurrentlySelected = items.some(i => i.lpgSizeId === size.id.toString());
+                            if (isCurrentlySelected) return true;
                             const stockItem = inventory?.find(inv => inv.lpg_size_id === size.id);
-                            const isCurrentlySelected = items.some(item => item.lpgSizeId === size.id.toString());
-                            return (stockItem && stockItem.full_count > 0) || isCurrentlySelected;
+                            return stockItem && stockItem.full_count > 0;
                           }).map((size) => {
                             const stockItem = inventory?.find(inv => inv.lpg_size_id === size.id);
                             return (
                               <SelectItem key={size.id} value={size.id.toString()}>
-                                {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name}
-                                <span className="ml-2 text-xs text-muted-foreground">
-                                  ({stockItem?.full_count || 0} in stock)
+                                {size.suppliers?.name ? `[${size.suppliers.name}] ` : ""}{size.name} 
+                                <span className="ml-2 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm">
+                                  {stockItem?.full_count || 0} in stock
                                 </span>
                               </SelectItem>
                             );
@@ -282,42 +282,46 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
                       </Select>
                     </div>
 
-                    {/* Quantity */}
-                    <div className="col-span-2 space-y-1">
-                      <Label htmlFor={`qty-${item.id}`} className="text-xs font-medium">Qty</Label>
+                    <div className="w-full sm:w-24 space-y-1.5">
+                      <Label htmlFor={`qty-${item.id}`} className="text-[10px] uppercase font-semibold text-muted-foreground/70 ml-1">Qty</Label>
                       <Input
                         id={`qty-${item.id}`}
                         type="number"
                         min="1"
-                        className="h-8 border-border/50 text-xs"
+                        className="h-9 border-border/60 bg-background shadow-xs transition-shadow focus:ring-1 text-center font-medium"
                         value={item.quantity}
                         onChange={(e) => updateItem(item.id, 'quantity', e.target.value)}
                       />
                     </div>
 
-                    {/* Unit Price */}
-                    <div className="col-span-3 space-y-1">
-                      <Label htmlFor={`price-${item.id}`} className="text-xs font-medium">Unit Price (₱)</Label>
+                    <div className="w-full sm:w-32 space-y-1.5">
+                      <Label htmlFor={`price-${item.id}`} className="text-[10px] uppercase font-semibold text-muted-foreground/70 ml-1">Unit Price (₱)</Label>
                       <Input
                         id={`price-${item.id}`}
                         type="number"
                         min="0"
                         step="0.01"
-                        className="h-8 border-border/50 text-xs"
+                        className="h-9 border-border/60 bg-background shadow-xs transition-shadow focus:ring-1 text-right font-medium pr-3"
                         value={item.unitPrice}
                         onChange={(e) => updateItem(item.id, 'unitPrice', e.target.value)}
                       />
                     </div>
 
-                    {/* Remove Button */}
-                    <div className="col-span-3 flex justify-end">
+                    <div className="w-full sm:w-32 space-y-1.5">
+                      <Label className="text-[10px] uppercase font-semibold text-muted-foreground/70 ml-1">Total</Label>
+                      <div className="h-9 flex items-center justify-end px-3 rounded-md bg-background/50 border border-border/40 text-sm font-semibold text-primary">
+                        ₱{(Number(item.quantity) * Number(item.unitPrice) || 0).toLocaleString()}
+                      </div>
+                    </div>
+
+                    <div className="pb-0.5">
                       <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={() => removeItem(item.id)}
                         disabled={items.length === 1}
-                        className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
+                        className="h-9 w-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-0"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -327,7 +331,6 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
               </div>
             </div>
 
-            {/* Total Price Display */}
             <div className="rounded-lg border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/2 p-4">
               <div className="flex justify-between items-end gap-4">
                 <div className="space-y-0.5">
@@ -341,7 +344,7 @@ export function EditSaleDialog({ open, onOpenChange, sale, lpgSizes }: EditSaleD
             </div>
           </div>
 
-          <DialogFooter className="gap-2 pt-2">
+          <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border/40 gap-3">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="h-9">
               Cancel
             </Button>
