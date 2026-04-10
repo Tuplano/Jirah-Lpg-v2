@@ -81,7 +81,7 @@ export async function getUnmanagedSizes(): Promise<LpgSize[]> {
   // Get all sizes
   const { data: allSizes, error: sizesError } = await supabase
     .from("lpg_sizes")
-    .select("*");
+    .select("*, suppliers(*)");
     
   if (sizesError) throw sizesError;
   

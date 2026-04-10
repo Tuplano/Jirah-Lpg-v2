@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Search, RefreshCcw } from "lucide-react";
-import { LpgSize } from "@/types";
+import { LpgSize, Transaction } from "@/types";
 import { ManualAdjustmentDialog } from "./manual-adjustment-dialog";
 import { useAdjustments } from "@/hooks/use-transactions";
 
 interface AdjustmentsViewProps {
-  initialAdjustments: any[];
+  initialAdjustments: { data: Transaction[], count: number };
   lpgSizes: LpgSize[];
 }
 
@@ -24,7 +24,8 @@ export function AdjustmentsView({ initialAdjustments, lpgSizes }: AdjustmentsVie
   const { data: adjustments, isLoading } = useAdjustments();
   const [searchTerm, setSearchTerm] = React.useState("");
 
-  const filteredAdjustments = (adjustments || initialAdjustments).filter((adj) =>
+  const adjustmentsData = adjustments?.data || initialAdjustments?.data || [];
+  const filteredAdjustments = (adjustmentsData as Transaction[]).filter((adj) =>
     adj.lpg_sizes?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     adj.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
     adj.note?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -69,7 +70,7 @@ export function AdjustmentsView({ initialAdjustments, lpgSizes }: AdjustmentsVie
           </TableHeader>
           <TableBody className="divide-y divide-border/50">
             {filteredAdjustments.length > 0 ? (
-              filteredAdjustments.map((tx) => (
+              filteredAdjustments.map((tx: Transaction) => (
                 <TableRow key={tx.id} className="hover:bg-muted/20 transition-colors">
                   <TableCell className="text-sm">
                     <div className="flex items-center gap-2">

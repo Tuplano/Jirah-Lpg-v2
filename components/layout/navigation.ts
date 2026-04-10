@@ -43,12 +43,14 @@ export const dashboardNavigation: NavigationGroup[] = [
     label: "Management",
     items: [
       { title: "Customers", url: "/customers", icon: Users },
-      { title: "Suppliers", url: "/suppliers", icon: Building2 },
       { title: "Audit Log", url: "/transactions", icon: History },
     ],
   },
   {
     label: "System",
-    items: [{ title: "LPG Sizes", url: "/settings", icon: Settings }],
+    items: [
+      { title: "Suppliers", url: "/suppliers", icon: Building2 },
+      { title: "LPG Sizes", url: "/settings", icon: Settings },
+    ],
   },
 ];
